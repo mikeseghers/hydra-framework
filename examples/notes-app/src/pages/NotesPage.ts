@@ -17,9 +17,9 @@ import { NoteEditorComponent, createNoteEditorComponent } from '../components/No
  *
  * The page receives its dependencies through constructor injection:
  * - NoteService: for CRUD operations
- * - NotificationPart: for showing user feedback (TRADITIONAL approach)
- * - StatusPart: for showing app status (DATA ATTRIBUTES approach)
- * - AppStatePart: for managing selection state
+ * - NotificationMediator: for showing user feedback (TRADITIONAL approach)
+ * - StatusMediator: for showing app status (DATA ATTRIBUTES approach)
+ * - AppStateMediator: for managing selection state
  */
 export class NotesPage implements PageController {
   private noteList!: NoteListComponent;

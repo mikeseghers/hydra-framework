@@ -31,7 +31,7 @@ describe('DataAttributes', () => {
   describe('discoverMediators()', () => {
     it('should discover a Mediator with elements', () => {
       container.innerHTML = `
-        <div data-hydra-mediator="NotificationPart">
+        <div data-hydra-mediator="NotificationMediator">
           <div data-hydra-element="container" id="inner"></div>
         </div>
       `;
@@ -39,7 +39,7 @@ describe('DataAttributes', () => {
       const discovered = discoverMediators(container);
 
       expect(discovered).toHaveLength(1);
-      expect(discovered[0].name).toBe('NotificationPart');
+      expect(discovered[0].name).toBe('NotificationMediator');
       expect(discovered[0].qualifier).toBeUndefined();
       expect(discovered[0].elements.container).toBeInstanceOf(HTMLDivElement);
       expect((discovered[0].elements.container as HTMLElement).id).toBe('inner');
@@ -47,7 +47,7 @@ describe('DataAttributes', () => {
 
     it('should discover Mediator with qualifier', () => {
       container.innerHTML = `
-        <div data-hydra-mediator="FormPart" data-hydra-qualifier="login">
+        <div data-hydra-mediator="FormMediator" data-hydra-qualifier="login">
           <input data-hydra-element="input" type="text">
         </div>
       `;
@@ -55,16 +55,16 @@ describe('DataAttributes', () => {
       const discovered = discoverMediators(container);
 
       expect(discovered).toHaveLength(1);
-      expect(discovered[0].name).toBe('FormPart');
+      expect(discovered[0].name).toBe('FormMediator');
       expect(discovered[0].qualifier).toBe('login');
     });
 
     it('should discover multiple Mediators', () => {
       container.innerHTML = `
-        <div data-hydra-mediator="HeaderPart">
+        <div data-hydra-mediator="HeaderMediator">
           <button data-hydra-element="menuButton"></button>
         </div>
-        <div data-hydra-mediator="FooterPart">
+        <div data-hydra-mediator="FooterMediator">
           <a data-hydra-element="link"></a>
         </div>
       `;
@@ -72,13 +72,13 @@ describe('DataAttributes', () => {
       const discovered = discoverMediators(container);
 
       expect(discovered).toHaveLength(2);
-      expect(discovered[0].name).toBe('HeaderPart');
-      expect(discovered[1].name).toBe('FooterPart');
+      expect(discovered[0].name).toBe('HeaderMediator');
+      expect(discovered[1].name).toBe('FooterMediator');
     });
 
     it('should collect multiple elements with same property name as array', () => {
       container.innerHTML = `
-        <div data-hydra-mediator="ListPart">
+        <div data-hydra-mediator="ListMediator">
           <li data-hydra-element="items">Item 1</li>
           <li data-hydra-element="items">Item 2</li>
           <li data-hydra-element="items">Item 3</li>
@@ -94,7 +94,7 @@ describe('DataAttributes', () => {
 
     it('should include root element if it has element attribute', () => {
       container.innerHTML = `
-        <div data-hydra-mediator="SimplePart" data-hydra-element="root"></div>
+        <div data-hydra-mediator="SimpleMediator" data-hydra-element="root"></div>
       `;
 
       const discovered = discoverMediators(container);
@@ -115,32 +115,32 @@ describe('DataAttributes', () => {
   describe('findMediator()', () => {
     it('should find Mediator by name', () => {
       container.innerHTML = `
-        <div data-hydra-mediator="HeaderPart"></div>
-        <div data-hydra-mediator="FooterPart"></div>
+        <div data-hydra-mediator="HeaderMediator"></div>
+        <div data-hydra-mediator="FooterMediator"></div>
       `;
 
       const discovered = discoverMediators(container);
-      const footer = findMediator(discovered, 'FooterPart');
+      const footer = findMediator(discovered, 'FooterMediator');
 
       expect(footer).toBeDefined();
-      expect(footer?.name).toBe('FooterPart');
+      expect(footer?.name).toBe('FooterMediator');
     });
 
     it('should find Mediator by name and qualifier', () => {
       container.innerHTML = `
-        <div data-hydra-mediator="FormPart" data-hydra-qualifier="login"></div>
-        <div data-hydra-mediator="FormPart" data-hydra-qualifier="signup"></div>
+        <div data-hydra-mediator="FormMediator" data-hydra-qualifier="login"></div>
+        <div data-hydra-mediator="FormMediator" data-hydra-qualifier="signup"></div>
       `;
 
       const discovered = discoverMediators(container);
-      const signup = findMediator(discovered, 'FormPart', 'signup');
+      const signup = findMediator(discovered, 'FormMediator', 'signup');
 
       expect(signup).toBeDefined();
       expect(signup?.qualifier).toBe('signup');
     });
 
     it('should return undefined when not found', () => {
-      container.innerHTML = `<div data-hydra-mediator="HeaderPart"></div>`;
+      container.innerHTML = `<div data-hydra-mediator="HeaderMediator"></div>`;
 
       const discovered = discoverMediators(container);
       const result = findMediator(discovered, 'NonExistent');
@@ -220,7 +220,7 @@ describe('DataAttributes', () => {
     it('should discover and validate Mediator elements', () => {
       // Setup DOM with data attributes
       container.innerHTML = `
-        <div data-hydra-mediator="NotificationPart">
+        <div data-hydra-mediator="NotificationMediator">
           <div data-hydra-element="container">
             <h2 data-hydra-element="title">Notifications</h2>
             <button data-hydra-element="closeButton">X</button>
@@ -235,11 +235,11 @@ describe('DataAttributes', () => {
       expect(discovered).toHaveLength(1);
 
       // Step 2: Find specific Mediator
-      const notificationPart = findMediator(discovered, 'NotificationPart');
-      expect(notificationPart).toBeDefined();
+      const notificationMediator = findMediator(discovered, 'NotificationMediator');
+      expect(notificationMediator).toBeDefined();
 
       // Step 3: Validate and type elements
-      const elements = notificationPart!.elements;
+      const elements = notificationMediator!.elements;
 
       const containerEl = assertElementType(elements.container, HTMLDivElement, 'container');
       expect(containerEl).toBeInstanceOf(HTMLDivElement);
@@ -257,12 +257,12 @@ describe('DataAttributes', () => {
 
     it('should work with multiple qualified Mediators', () => {
       container.innerHTML = `
-        <div data-hydra-mediator="FormPart" data-hydra-qualifier="login">
+        <div data-hydra-mediator="FormMediator" data-hydra-qualifier="login">
           <input data-hydra-element="emailInput" type="email">
           <input data-hydra-element="passwordInput" type="password">
           <button data-hydra-element="submitButton">Login</button>
         </div>
-        <div data-hydra-mediator="FormPart" data-hydra-qualifier="signup">
+        <div data-hydra-mediator="FormMediator" data-hydra-qualifier="signup">
           <input data-hydra-element="emailInput" type="email">
           <input data-hydra-element="passwordInput" type="password">
           <input data-hydra-element="confirmInput" type="password">
@@ -274,13 +274,13 @@ describe('DataAttributes', () => {
       expect(discovered).toHaveLength(2);
 
       // Get login form
-      const loginForm = findMediator(discovered, 'FormPart', 'login');
+      const loginForm = findMediator(discovered, 'FormMediator', 'login');
       expect(loginForm).toBeDefined();
       const loginSubmit = assertElementType(loginForm!.elements.submitButton, HTMLButtonElement);
       expect(loginSubmit.textContent).toBe('Login');
 
       // Get signup form
-      const signupForm = findMediator(discovered, 'FormPart', 'signup');
+      const signupForm = findMediator(discovered, 'FormMediator', 'signup');
       expect(signupForm).toBeDefined();
       const signupSubmit = assertElementType(signupForm!.elements.submitButton, HTMLButtonElement);
       expect(signupSubmit.textContent).toBe('Sign Up');

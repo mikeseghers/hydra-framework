@@ -10,7 +10,7 @@ import { AppContext } from './contexts/AppContext';
  *    - Singleton services for business logic and data management
  *    - Injected into Mediators and PageEntries
  *
- * 2. Mediators (NotificationPart, AppStatePart)
+ * 2. Mediators (NotificationMediator, AppStateMediator)
  *    - Event-capable components for cross-cutting concerns
  *    - Enable loose coupling through event-based communication
  *
@@ -37,7 +37,7 @@ import { AppContext } from './contexts/AppContext';
  */
 
 // Register the application context
-// This tells Hydra about all our services, page parts, and page entries
+// This tells Hydra about all our services, mediators, and page controllers
 Hydra.registerContext(AppContext);
 
 // Hydra.getInstance() sets up the window.onload handler

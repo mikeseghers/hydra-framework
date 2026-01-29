@@ -96,7 +96,7 @@ export function discoverMediators(root: Document | Element = document): Discover
  *
  * @param element - The element to validate
  * @param expectedType - The expected HTMLElement subtype
- * @param context - Optional context for error messages (e.g., "NotificationPart.container")
+ * @param context - Optional context for error messages (e.g., "NotificationMediator.container")
  * @returns The element cast to the expected type
  *
  * @example

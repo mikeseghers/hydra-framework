@@ -174,7 +174,7 @@ interface Elements {
   container: HTMLDivElement;
 }
 
-class NotificationPart extends AbstractMediator<NotificationEvents> {
+class NotificationMediator extends AbstractMediator<NotificationEvents> {
   constructor(private elements: Elements) {
     super();
   }
@@ -219,7 +219,7 @@ PageEntries are top-level page controllers. They receive dependencies and coordi
 class DashboardPage implements PageController {
   constructor(
     private userService: UserService,
-    private notifications: NotificationPart,
+    private notifications: NotificationMediator,
     private elements: DashboardElements
   ) {}
 
@@ -232,7 +232,7 @@ class DashboardPage implements PageController {
 
 hydra.registerPageController(DashboardPage, [
   service(UserService),
-  mediator(NotificationPart),
+  mediator(NotificationMediator),
   dashboardElements
 ]);
 ```
@@ -292,7 +292,7 @@ const formElements = {
   checkboxes: htmlElementCollectionDescriptor('.checkbox', HTMLInputElement)
 };
 
-hydra.registerMediator(FormPart, [formElements]);
+hydra.registerMediator(FormMediator, [formElements]);
 ```
 
 **HTML:**
@@ -313,12 +313,12 @@ Let Hydra discover elements automatically using data attributes:
 import { dataAttributes } from '@mikeseghers/hydra';
 
 // Just use the marker - no element descriptors needed
-hydra.registerMediator(StatusPart, [dataAttributes()]);
+hydra.registerMediator(StatusMediator, [dataAttributes()]);
 ```
 
 **HTML:**
 ```html
-<div data-hydra-mediator="StatusPart">
+<div data-hydra-mediator="StatusMediator">
   <span data-hydra-element="indicator"></span>
   <span data-hydra-element="statusText">Ready</span>
 </div>
@@ -333,7 +333,7 @@ interface Elements {
   statusText: HTMLSpanElement;
 }
 
-class StatusPart extends AbstractMediator<StatusEvents> {
+class StatusMediator extends AbstractMediator<StatusEvents> {
   #elements: Elements;
 
   constructor(discovered: Record<string, HTMLElement | HTMLElement[]>) {
@@ -357,7 +357,7 @@ class StatusPart extends AbstractMediator<StatusEvents> {
 
 | Attribute | Purpose | Example |
 |-----------|---------|---------|
-| `data-hydra-mediator` | Marks Mediator root, value is class name | `data-hydra-mediator="NotificationPart"` |
+| `data-hydra-mediator` | Marks Mediator root, value is class name | `data-hydra-mediator="NotificationMediator"` |
 | `data-hydra-element` | Marks element property name | `data-hydra-element="container"` |
 | `data-hydra-qualifier` | For multiple instances of same Mediator | `data-hydra-qualifier="sidebar"` |
 
@@ -382,7 +382,7 @@ import { service, mediator, value, htmlElementDescriptor } from '@mikeseghers/hy
 
 hydra.registerPageController(MyPage, [
   service(ApiService),           // Inject a service
-  mediator(NotificationPart),    // Inject a Mediator
+  mediator(NotificationMediator),    // Inject a Mediator
   value('https://api.example.com'), // Inject a constant
   myPageElements                 // Inject DOM elements
 ]);
@@ -432,21 +432,21 @@ Create multiple instances of the same Mediator:
 
 ```typescript
 // Registration
-hydra.registerMediator(FormPart, [dataAttributes()]);
+hydra.registerMediator(FormMediator, [dataAttributes()]);
 
 // Usage in PageController
 hydra.registerPageController(SettingsPage, [
-  mediator(FormPart, { qualifier: 'profile' }),
-  mediator(FormPart, { qualifier: 'password' })
+  mediator(FormMediator, { qualifier: 'profile' }),
+  mediator(FormMediator, { qualifier: 'password' })
 ]);
 ```
 
 ```html
-<div data-hydra-mediator="FormPart" data-hydra-qualifier="profile">
+<div data-hydra-mediator="FormMediator" data-hydra-qualifier="profile">
   <input data-hydra-element="input" type="text" />
 </div>
 
-<div data-hydra-mediator="FormPart" data-hydra-qualifier="password">
+<div data-hydra-mediator="FormMediator" data-hydra-qualifier="password">
   <input data-hydra-element="input" type="password" />
 </div>
 ```
@@ -486,7 +486,7 @@ export const AuthContext: HydraContext = {
   register(hydra: Hydra): void {
     hydra.registerService(AuthService);
     hydra.registerService(SessionService, [service(AuthService)]);
-    hydra.registerMediator(LoginFormPart, [dataAttributes()]);
+    hydra.registerMediator(LoginFormMediator, [dataAttributes()]);
   }
 };
 
@@ -494,7 +494,7 @@ export const AuthContext: HydraContext = {
 export const DashboardContext: HydraContext = {
   register(hydra: Hydra): void {
     hydra.registerService(AnalyticsService);
-    hydra.registerMediator(ChartPart, [chartElements]);
+    hydra.registerMediator(ChartMediator, [chartElements]);
   }
 };
 
@@ -598,7 +598,7 @@ findMediator(discovered, name, qualifier?): DiscoveredMediator | undefined
 See [`examples/notes-app/`](examples/notes-app/) for a complete working example demonstrating:
 
 - Services (NoteService)
-- Mediators with events (NotificationPart, AppStatePart, StatusPart)
+- Mediators with events (NotificationMediator, AppStateMediator, StatusMediator)
 - Components with subcomponents (NoteListComponent, NoteEditorComponent)
 - Both element binding approaches (traditional + data attributes)
 - Template cloning for dynamic lists

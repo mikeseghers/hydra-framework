@@ -9,7 +9,7 @@ import type { default as PageController } from '../src/PageController';
  * These tests demonstrate how to initialize and bootstrap Hydra
  * in your application. The bootstrap process involves:
  * 1. Getting the Hydra singleton instance
- * 2. Registering services, page parts and page entries
+ * 2. Registering services, mediators and page controllers
  * 3. Letting Hydra automatically boot when the page loads
  */
 describe('Hydra Bootstrap', () => {

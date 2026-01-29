@@ -415,10 +415,10 @@ export function isDataAttributesMarker(value: unknown): value is DataAttributesM
  * @example
  * ```typescript
  * // In context registration:
- * hydra.registerMediator(NotificationPart, [dataAttributes()]);
+ * hydra.registerMediator(NotificationMediator, [dataAttributes()]);
  *
  * // In HTML:
- * <div data-hydra-mediator="NotificationPart">
+ * <div data-hydra-mediator="NotificationMediator">
  *   <div data-hydra-element="container"></div>
  * </div>
  * ```
