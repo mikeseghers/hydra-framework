@@ -1,5 +1,5 @@
-import { AbstractMediator, htmlElementDescriptor } from '@mikeseghers/hydra';
-import { cloneTemplateContent } from '@mikeseghers/hydra';
+import { AbstractMediator, ElementsOf, htmlElementDescriptor, cloneTemplateContent } from '@mikeseghers/hydra';
+import { NotificationElements } from '../elements/NotificationElements';
 
 /**
  * Notification types for styling purposes.
@@ -22,16 +22,15 @@ const notificationDescriptors = {
 };
 
 /**
- * Elements required by the NotificationMediator.
+ * Elements type derived from the schema.
  */
-interface Elements {
-  container: HTMLElement;
-}
+type Elements = ElementsOf<typeof NotificationElements>;
 
 /**
  * NotificationMediator - Manages toast notifications.
  *
- * This PageMediator demonstrates:
+ * This Mediator demonstrates:
+ * - Element schema with CSS selector (unified API)
  * - Event emission for notification lifecycle
  * - Template-based DOM creation
  * - Auto-dismissal with timeouts
@@ -43,9 +42,9 @@ export class NotificationMediator extends AbstractMediator<NotificationEvents> {
   #elements: Elements;
   readonly #defaultDuration = 3000;
 
-  constructor(pageElements: Elements) {
+  constructor(elements: Elements) {
     super();
-    this.#elements = pageElements;
+    this.#elements = elements;
   }
 
   load(): void {

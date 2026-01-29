@@ -21,8 +21,7 @@ export {
   htmlElementDescriptor,
   htmlElementCollectionDescriptor,
   pageElements,
-  constructComponent,
-  dataAttributes
+  constructComponent
 } from './Hydra';
 
 export type { BaseComponent } from './BaseComponent';
@@ -42,6 +41,18 @@ export {
   findMediator,
   // Type assertion helpers
   assertElementType,
-  assertElementTypes
+  assertElementTypes,
+  // Element schemas
+  elements,
+  collection,
+  selector,
+  selectorAll
 } from './DataAttributes';
-export type { DiscoveredMediator } from './DataAttributes';
+export type {
+  DiscoveredMediator,
+  ElementSchema,
+  ElementsOf,
+  ElementCollection,
+  ElementWithSelector,
+  ElementCollectionWithSelector
+} from './DataAttributes';

@@ -1,4 +1,5 @@
-import { AbstractMediator, assertElementType } from '@mikeseghers/hydra';
+import { AbstractMediator, ElementsOf } from '@mikeseghers/hydra';
+import { StatusElements } from '../elements/StatusElements';
 
 /**
  * Events emitted by the StatusMediator.
@@ -8,22 +9,18 @@ export interface StatusEvents {
 }
 
 /**
- * Elements interface - defines what this Mediator expects.
- * When using dataAttributes(), these are discovered from the DOM
- * via data-hydra-element attributes.
+ * Elements type derived from the schema - no manual interface needed!
  */
-interface Elements {
-  statusText: HTMLSpanElement;
-  indicator: HTMLElement;
-}
+type Elements = ElementsOf<typeof StatusElements>;
 
 /**
  * StatusMediator - Displays application status using DATA ATTRIBUTES approach.
  *
- * This Mediator demonstrates the data-attribute bootstrapping pattern:
- * - No htmlElementDescriptor() calls needed in the context
- * - Elements are discovered from DOM via data-hydra-element attributes
- * - Type safety via assertElementType() at construction time
+ * This Mediator demonstrates the element schema pattern:
+ * - Elements are defined once in StatusElements schema
+ * - Type is derived from schema via ElementsOf<>
+ * - Hydra validates elements automatically before construction
+ * - Constructor receives typed, validated elements
  *
  * HTML setup:
  * ```html
@@ -35,19 +32,15 @@ interface Elements {
  *
  * Context registration:
  * ```typescript
- * hydra.registerMediator(StatusMediator, [dataAttributes()]);
+ * hydra.registerMediator(StatusMediator, [StatusElements]);
  * ```
  */
 export class StatusMediator extends AbstractMediator<StatusEvents> {
   #elements: Elements;
 
-  constructor(discoveredElements: Record<string, HTMLElement | HTMLElement[]>) {
+  constructor(elements: Elements) {
     super();
-    // Validate and type the discovered elements
-    this.#elements = {
-      statusText: assertElementType(discoveredElements.statusText, HTMLSpanElement, 'statusText'),
-      indicator: assertElementType(discoveredElements.indicator, HTMLElement, 'indicator')
-    };
+    this.#elements = elements;
   }
 
   load(): void {

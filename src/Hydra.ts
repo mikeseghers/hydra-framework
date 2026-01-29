@@ -1,6 +1,13 @@
 import { BaseComponent } from './BaseComponent';
 import { Component } from './Component';
-import { discoverMediators, findMediator } from './DataAttributes';
+import {
+  discoverMediators,
+  findMediator,
+  isElementSchema,
+  isElementWithSelector,
+  validateElementsAgainstSchema,
+  ElementSchema
+} from './DataAttributes';
 import Loadable from './Loadable';
 import Mediator from './Mediator';
 import PageController from './PageController';
@@ -25,7 +32,7 @@ export type MediatorDefinitionParameter =
   | MediatorDependencyDefinition
   | PageElementContainer
   | ValueDependencyDefinition
-  | DataAttributesMarker;
+  | ElementSchema;
 export type ServiceConstructor = new (...args: any[]) => any;
 export type ServiceDefinitionParameter = ServiceDependencyDefinition | ValueDependencyDefinition;
 export interface MediatorOptions {
@@ -142,8 +149,6 @@ export default class Hydra implements HydraRegistry, HydraRepository {
     }
   }
 
-  private newBoot() {}
-
   private load(loadable: Loadable): Promise<void> {
     try {
       return Promise.resolve(loadable.load());
@@ -210,10 +215,11 @@ export default class Hydra implements HydraRegistry, HydraRepository {
         dependencies.push(this.getServiceInstance(param.serviceType));
       } else if (isMediatorDependencyDefinition(param)) {
         dependencies.push(this.getMediatorInstance(param));
-      } else if (isDataAttributesMarker(param)) {
-        // Auto-discover elements from DOM using data attributes
-        const elements = this.discoverElementsFromDataAttributes(mediatorName, options?.qualifier);
-        dependencies.push(elements);
+      } else if (isElementSchema(param)) {
+        // Resolve elements from schema (handles both selectors and data attributes)
+        const resolved = this.resolveElementsFromSchema(param, mediatorName, options?.qualifier);
+        const validated = validateElementsAgainstSchema(resolved, param, mediatorName ?? 'Unknown');
+        dependencies.push(validated);
       } else if (isPageElementContainer(param)) {
         const result = pageElements(param, document, options);
         dependencies.push(result);
@@ -246,6 +252,43 @@ export default class Hydra implements HydraRegistry, HydraRepository {
     }
 
     return mediator.elements;
+  }
+
+  private resolveElementsFromSchema(
+    schema: ElementSchema,
+    mediatorName?: string,
+    qualifier?: string
+  ): Record<string, HTMLElement | HTMLElement[]> {
+    const result: Record<string, HTMLElement | HTMLElement[]> = {};
+    let needsDataAttributeDiscovery = false;
+
+    // First pass: resolve selector-based entries and detect if we need data attribute discovery
+    for (const [propertyName, entry] of Object.entries(schema.definition)) {
+      if (isElementWithSelector(entry)) {
+        // Resolve via CSS selector
+        if (entry.__collection) {
+          result[propertyName] = getAllElementsBySelector(entry.selector, entry.type);
+        } else {
+          result[propertyName] = getFirstElementBySelector(entry.selector, entry.type);
+        }
+      } else {
+        // This entry needs data attribute discovery
+        needsDataAttributeDiscovery = true;
+      }
+    }
+
+    // Second pass: if any entries need data attribute discovery, do it once
+    if (needsDataAttributeDiscovery) {
+      const discovered = this.discoverElementsFromDataAttributes(mediatorName, qualifier);
+
+      for (const [propertyName, entry] of Object.entries(schema.definition)) {
+        if (!isElementWithSelector(entry)) {
+          result[propertyName] = discovered[propertyName];
+        }
+      }
+    }
+
+    return result;
   }
 
   getServiceInstance<ServiceType>(serviceType: ConstructorOf<ServiceType>, name?: string): ServiceType {
@@ -394,37 +437,6 @@ export function isValueDependencyDefinition(definition: any): definition is Valu
 
 export function value(v: any): ValueDependencyDefinition {
   return { value: v };
-}
-
-/**
- * Marker for data-attribute based element discovery.
- * When used in Mediator registration, Hydra will auto-discover elements
- * from the DOM using data-hydra-element attributes.
- */
-export interface DataAttributesMarker {
-  __dataAttributes: true;
-}
-
-export function isDataAttributesMarker(value: unknown): value is DataAttributesMarker {
-  return typeof value === 'object' && value !== null && '__dataAttributes' in value;
-}
-
-/**
- * Marker that tells Hydra to discover elements via data attributes.
- *
- * @example
- * ```typescript
- * // In context registration:
- * hydra.registerMediator(NotificationMediator, [dataAttributes()]);
- *
- * // In HTML:
- * <div data-hydra-mediator="NotificationMediator">
- *   <div data-hydra-element="container"></div>
- * </div>
- * ```
- */
-export function dataAttributes(): DataAttributesMarker {
-  return { __dataAttributes: true };
 }
 
 export function pageElements<PEC extends PageElementContainer>(

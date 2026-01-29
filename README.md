@@ -274,46 +274,41 @@ const card = constructComponent(Card, '#card-template', HTMLDivElement, cardElem
 
 ## Element Binding
 
-Hydra offers two approaches for binding DOM elements to your components.
+Hydra uses **element schemas** to define what DOM elements a Mediator needs. The schema is defined once in a separate file and provides both runtime validation and TypeScript types.
 
-### Traditional Approach: CSS Selectors
-
-Define element descriptors with CSS selectors in your context:
+### Element Schema Basics
 
 ```typescript
-import { htmlElementDescriptor, htmlElementCollectionDescriptor } from '@mikeseghers/hydra';
+// elements/MyElements.ts
+import { elements, selector, collection, selectorAll } from '@mikeseghers/hydra';
 
-const formElements = {
-  // Single element
-  submitButton: htmlElementDescriptor('#submit-btn', HTMLButtonElement),
-  emailInput: htmlElementDescriptor('input[type="email"]', HTMLInputElement),
+export const MyElements = elements({
+  // Data attribute discovery (matches data-hydra-element="propertyName")
+  indicator: HTMLSpanElement,
+  statusText: HTMLSpanElement,
 
-  // Collection of elements
-  checkboxes: htmlElementCollectionDescriptor('.checkbox', HTMLInputElement)
-};
+  // CSS selector discovery
+  submitBtn: selector('#submit-btn', HTMLButtonElement),
+  emailInput: selector('input[type="email"]', HTMLInputElement),
 
-hydra.registerMediator(FormMediator, [formElements]);
+  // Collections
+  items: collection(HTMLLIElement),           // via data attributes
+  checkboxes: selectorAll('.checkbox', HTMLInputElement)  // via CSS selector
+});
 ```
 
-**HTML:**
-```html
-<form>
-  <input type="email" />
-  <input type="checkbox" class="checkbox" />
-  <input type="checkbox" class="checkbox" />
-  <button id="submit-btn">Submit</button>
-</form>
-```
+### Data Attribute Discovery
 
-### Data Attributes Approach
-
-Let Hydra discover elements automatically using data attributes:
+Use the HTMLElement type directly. Hydra matches property names to `data-hydra-element` values:
 
 ```typescript
-import { dataAttributes } from '@mikeseghers/hydra';
+// elements/StatusElements.ts
+import { elements } from '@mikeseghers/hydra';
 
-// Just use the marker - no element descriptors needed
-hydra.registerMediator(StatusMediator, [dataAttributes()]);
+export const StatusElements = elements({
+  indicator: HTMLSpanElement,   // ← matches data-hydra-element="indicator"
+  statusText: HTMLSpanElement   // ← matches data-hydra-element="statusText"
+});
 ```
 
 **HTML:**
@@ -324,52 +319,95 @@ hydra.registerMediator(StatusMediator, [dataAttributes()]);
 </div>
 ```
 
-**Mediator with data attributes:**
-```typescript
-import { AbstractMediator, assertElementType } from '@mikeseghers/hydra';
+### CSS Selector Discovery
 
-interface Elements {
-  indicator: HTMLSpanElement;
-  statusText: HTMLSpanElement;
-}
+Use `selector()` or `selectorAll()` to find elements via CSS selectors:
+
+```typescript
+// elements/NotificationElements.ts
+import { elements, selector } from '@mikeseghers/hydra';
+
+export const NotificationElements = elements({
+  container: selector('#notifications', HTMLDivElement)
+});
+```
+
+**HTML:**
+```html
+<div id="notifications"></div>
+```
+
+### Mixed Schemas
+
+You can mix both approaches in a single schema:
+
+```typescript
+export const FormElements = elements({
+  // CSS selectors for structural elements
+  form: selector('form.contact', HTMLFormElement),
+  submitBtn: selector('#submit', HTMLButtonElement),
+
+  // Data attributes for dynamic elements
+  errorMessage: HTMLSpanElement,
+  successMessage: HTMLSpanElement
+});
+```
+
+### Using Schemas in Mediators
+
+```typescript
+import { AbstractMediator, ElementsOf } from '@mikeseghers/hydra';
+import { StatusElements } from '../elements/StatusElements';
+
+// Type is derived from the schema
+type Elements = ElementsOf<typeof StatusElements>;
 
 class StatusMediator extends AbstractMediator<StatusEvents> {
   #elements: Elements;
 
-  constructor(discovered: Record<string, HTMLElement | HTMLElement[]>) {
+  constructor(elements: Elements) {
     super();
-    // Validate and type the discovered elements
-    this.#elements = {
-      indicator: assertElementType(discovered.indicator, HTMLSpanElement),
-      statusText: assertElementType(discovered.statusText, HTMLSpanElement)
-    };
-  }
-
-  load(): void {}
-
-  setStatus(message: string): void {
-    this.#elements.statusText.textContent = message;
+    this.#elements = elements; // Already validated by Hydra!
   }
 }
 ```
+
+### Registration
+
+```typescript
+// contexts/AppContext.ts
+import { StatusElements } from '../elements/StatusElements';
+import { NotificationElements } from '../elements/NotificationElements';
+
+hydra.registerMediator(StatusMediator, [StatusElements]);
+hydra.registerMediator(NotificationMediator, [NotificationElements]);
+```
+
+### Schema Entry Reference
+
+| Entry Type | Syntax | Discovery Method |
+|------------|--------|------------------|
+| Single element | `HTMLButtonElement` | `data-hydra-element="propName"` |
+| Collection | `collection(HTMLLIElement)` | Multiple `data-hydra-element="propName"` |
+| Single via selector | `selector('#id', HTMLDivElement)` | CSS selector |
+| Collection via selector | `selectorAll('.class', HTMLInputElement)` | CSS selector (all matches) |
 
 ### Data Attributes Reference
 
 | Attribute | Purpose | Example |
 |-----------|---------|---------|
-| `data-hydra-mediator` | Marks Mediator root, value is class name | `data-hydra-mediator="NotificationMediator"` |
-| `data-hydra-element` | Marks element property name | `data-hydra-element="container"` |
+| `data-hydra-mediator` | Marks Mediator root, value is class name | `data-hydra-mediator="StatusMediator"` |
+| `data-hydra-element` | Marks element, value must match schema property name | `data-hydra-element="indicator"` |
 | `data-hydra-qualifier` | For multiple instances of same Mediator | `data-hydra-qualifier="sidebar"` |
 
-### When to Use Each Approach
+### When to Use Each Discovery Method
 
 | Scenario | Recommended |
 |----------|-------------|
-| Existing HTML you can't modify | Traditional (CSS selectors) |
-| New project, prefer self-documenting HTML | Data attributes |
-| Complex selectors (`:nth-child`, etc.) | Traditional |
-| Multiple instances with qualifiers | Data attributes |
-| Mix of both in same project | Supported! |
+| Existing HTML you can't modify | `selector()` / `selectorAll()` |
+| New project, self-documenting HTML | Direct types (data attributes) |
+| Complex selectors (`:nth-child`, etc.) | `selector()` / `selectorAll()` |
+| Multiple Mediator instances with qualifiers | Direct types (data attributes) |
 
 ---
 
@@ -432,7 +470,7 @@ Create multiple instances of the same Mediator:
 
 ```typescript
 // Registration
-hydra.registerMediator(FormMediator, [dataAttributes()]);
+hydra.registerMediator(FormMediator, [FormElements]);
 
 // Usage in PageController
 hydra.registerPageController(SettingsPage, [
@@ -465,6 +503,9 @@ src/
 ├── mediators/          # Event-capable components
 │   ├── NotificationMediator.ts
 │   └── ModalMediator.ts
+├── elements/           # Element schemas
+│   ├── StatusElements.ts
+│   └── FormElements.ts
 ├── components/         # Reusable UI components
 │   ├── CardComponent.ts
 │   └── ListComponent.ts
@@ -486,7 +527,7 @@ export const AuthContext: HydraContext = {
   register(hydra: Hydra): void {
     hydra.registerService(AuthService);
     hydra.registerService(SessionService, [service(AuthService)]);
-    hydra.registerMediator(LoginFormMediator, [dataAttributes()]);
+    hydra.registerMediator(LoginFormMediator, [LoginFormElements]);
   }
 };
 
@@ -572,7 +613,30 @@ hydra.getMediatorInstance(definition): Loadable
 service(ServiceType)                    // Inject a service
 mediator(MediatorType, options?)        // Inject a Mediator
 value(v)                                // Inject a constant
-dataAttributes()                        // Auto-discover elements
+```
+
+### Element Schema Functions
+
+```typescript
+elements(schema)                        // Create element schema
+selector(cssSelector, Type)             // Single element via CSS selector
+selectorAll(cssSelector, Type)          // Collection via CSS selector
+collection(Type)                        // Collection via data attributes
+```
+
+### Element Schema Types
+
+```typescript
+ElementsOf<Schema>                      // Extract elements type from schema
+ElementSchema<D>                        // Schema type
+ElementCollection<T>                    // Collection marker (data attributes)
+ElementWithSelector<T>                  // Single element with selector
+ElementCollectionWithSelector<T>        // Collection with selector
+```
+
+### Legacy Element Descriptors
+
+```typescript
 htmlElementDescriptor(selector, type)   // Single element descriptor
 htmlElementCollectionDescriptor(selector, type)  // Collection descriptor
 ```
