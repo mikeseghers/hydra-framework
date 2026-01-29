@@ -18,7 +18,7 @@ import { AppContext } from './contexts/AppContext';
  *    - UI components with DOM bindings
  *    - Support subcomponent hierarchies
  *
- * 4. PageEntry (NotesPage)
+ * 4. PageController (NotesPage)
  *    - Top-level page controller
  *    - Coordinates components and handles user actions
  *

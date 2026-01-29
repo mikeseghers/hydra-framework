@@ -352,7 +352,7 @@ describe('Mediators', () => {
       }
     }
 
-    // PageEntry that uses the MessageBus
+    // PageController that uses the MessageBus
     class ChatPage implements PageController {
       public messages: Array<{ from: string; text: string }> = [];
 
@@ -411,7 +411,7 @@ describe('Mediators', () => {
       }
     }
 
-    // PageEntry using two separate counters
+    // PageController using two separate counters
     class DualCounterPage implements PageController {
       constructor(
         private leftCounter: CounterMediator,

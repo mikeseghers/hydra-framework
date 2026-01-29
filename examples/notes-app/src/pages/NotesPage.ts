@@ -1,4 +1,4 @@
-import type { PageEntry } from '@mikeseghers/hydra';
+import type { PageController } from '@mikeseghers/hydra';
 import { NoteService } from '../services/NoteService';
 import { NotificationMediator } from '../mediators/NotificationMediator';
 import { StatusMediator } from '../mediators/StatusMediator';
@@ -9,7 +9,7 @@ import { NoteEditorComponent, createNoteEditorComponent } from '../components/No
 /**
  * NotesPage - Main page controller for the notes application.
  *
- * This PageEntry demonstrates:
+ * This PageController demonstrates:
  * - Coordinating multiple components
  * - Handling user actions (new, save, delete)
  * - Wiring up event listeners between Mediators and components
@@ -21,7 +21,7 @@ import { NoteEditorComponent, createNoteEditorComponent } from '../components/No
  * - StatusPart: for showing app status (DATA ATTRIBUTES approach)
  * - AppStatePart: for managing selection state
  */
-export class NotesPage implements PageEntry {
+export class NotesPage implements PageController {
   private noteList!: NoteListComponent;
   private editor!: NoteEditorComponent;
 

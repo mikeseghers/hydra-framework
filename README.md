@@ -58,13 +58,13 @@ export class GreetingService {
 }
 ```
 
-### 3. Define a PageEntry
+### 3. Define a PageController
 
-PageEntries are top-level controllers that coordinate your page.
+PageControllers are top-level controllers that coordinate your page.
 
 ```typescript
 // pages/HomePage.ts
-import type { PageEntry } from '@mikeseghers/hydra';
+import type { PageController } from '@mikeseghers/hydra';
 import { GreetingService } from '../services/GreetingService';
 
 interface Elements {
@@ -72,7 +72,7 @@ interface Elements {
   changeButton: HTMLButtonElement;
 }
 
-export class HomePage implements PageEntry {
+export class HomePage implements PageController {
   constructor(
     private greetingService: GreetingService,
     private elements: Elements
@@ -104,7 +104,7 @@ const homePageElements = {
 export const AppContext: HydraContext = {
   register(hydra: Hydra): void {
     hydra.registerService(GreetingService);
-    hydra.registerPageEntry(HomePage, [
+    hydra.registerPageController(HomePage, [
       service(GreetingService),
       homePageElements
     ]);
@@ -158,12 +158,12 @@ hydra.registerService(ApiService);
 hydra.registerService(UserService, [service(ApiService)]);
 ```
 
-### PageParts
+### Mediators
 
-PageParts are event-capable components for cross-cutting concerns (notifications, modals, state).
+Mediators are event-capable components for cross-cutting concerns (notifications, modals, state).
 
 ```typescript
-import { AbstractPagePart } from '@mikeseghers/hydra';
+import { AbstractMediator } from '@mikeseghers/hydra';
 
 interface NotificationEvents {
   shown: { message: string };
@@ -174,7 +174,7 @@ interface Elements {
   container: HTMLDivElement;
 }
 
-class NotificationPart extends AbstractPagePart<NotificationEvents> {
+class NotificationPart extends AbstractMediator<NotificationEvents> {
   constructor(private elements: Elements) {
     super();
   }
@@ -206,7 +206,7 @@ notifications.addListener('shown', (payload) => {
 });
 
 // With RxJS
-notifications.fromPagePartEvent('shown').subscribe((payload) => {
+notifications.fromMediatorEvent('shown').subscribe((payload) => {
   console.log('Notification shown:', payload.message);
 });
 ```
@@ -216,7 +216,7 @@ notifications.fromPagePartEvent('shown').subscribe((payload) => {
 PageEntries are top-level page controllers. They receive dependencies and coordinate the page.
 
 ```typescript
-class DashboardPage implements PageEntry {
+class DashboardPage implements PageController {
   constructor(
     private userService: UserService,
     private notifications: NotificationPart,
@@ -230,9 +230,9 @@ class DashboardPage implements PageEntry {
   }
 }
 
-hydra.registerPageEntry(DashboardPage, [
+hydra.registerPageController(DashboardPage, [
   service(UserService),
-  pagePart(NotificationPart),
+  mediator(NotificationPart),
   dashboardElements
 ]);
 ```
@@ -292,7 +292,7 @@ const formElements = {
   checkboxes: htmlElementCollectionDescriptor('.checkbox', HTMLInputElement)
 };
 
-hydra.registerPagePart(FormPart, [formElements]);
+hydra.registerMediator(FormPart, [formElements]);
 ```
 
 **HTML:**
@@ -313,27 +313,27 @@ Let Hydra discover elements automatically using data attributes:
 import { dataAttributes } from '@mikeseghers/hydra';
 
 // Just use the marker - no element descriptors needed
-hydra.registerPagePart(StatusPart, [dataAttributes()]);
+hydra.registerMediator(StatusPart, [dataAttributes()]);
 ```
 
 **HTML:**
 ```html
-<div data-hydra-pagepart="StatusPart">
+<div data-hydra-mediator="StatusPart">
   <span data-hydra-element="indicator"></span>
   <span data-hydra-element="statusText">Ready</span>
 </div>
 ```
 
-**PagePart with data attributes:**
+**Mediator with data attributes:**
 ```typescript
-import { AbstractPagePart, assertElementType } from '@mikeseghers/hydra';
+import { AbstractMediator, assertElementType } from '@mikeseghers/hydra';
 
 interface Elements {
   indicator: HTMLSpanElement;
   statusText: HTMLSpanElement;
 }
 
-class StatusPart extends AbstractPagePart<StatusEvents> {
+class StatusPart extends AbstractMediator<StatusEvents> {
   #elements: Elements;
 
   constructor(discovered: Record<string, HTMLElement | HTMLElement[]>) {
@@ -357,9 +357,9 @@ class StatusPart extends AbstractPagePart<StatusEvents> {
 
 | Attribute | Purpose | Example |
 |-----------|---------|---------|
-| `data-hydra-pagepart` | Marks PagePart root, value is class name | `data-hydra-pagepart="NotificationPart"` |
+| `data-hydra-mediator` | Marks Mediator root, value is class name | `data-hydra-mediator="NotificationPart"` |
 | `data-hydra-element` | Marks element property name | `data-hydra-element="container"` |
-| `data-hydra-qualifier` | For multiple instances of same PagePart | `data-hydra-qualifier="sidebar"` |
+| `data-hydra-qualifier` | For multiple instances of same Mediator | `data-hydra-qualifier="sidebar"` |
 
 ### When to Use Each Approach
 
@@ -378,11 +378,11 @@ class StatusPart extends AbstractPagePart<StatusEvents> {
 ### Dependency Types
 
 ```typescript
-import { service, pagePart, value, htmlElementDescriptor } from '@mikeseghers/hydra';
+import { service, mediator, value, htmlElementDescriptor } from '@mikeseghers/hydra';
 
-hydra.registerPageEntry(MyPage, [
+hydra.registerPageController(MyPage, [
   service(ApiService),           // Inject a service
-  pagePart(NotificationPart),    // Inject a PagePart
+  mediator(NotificationPart),    // Inject a Mediator
   value('https://api.example.com'), // Inject a constant
   myPageElements                 // Inject DOM elements
 ]);
@@ -426,27 +426,27 @@ hydra.registerService(ApiService, [
 ]);
 ```
 
-### Qualified PageParts
+### Qualified Mediators
 
-Create multiple instances of the same PagePart:
+Create multiple instances of the same Mediator:
 
 ```typescript
 // Registration
-hydra.registerPagePart(FormPart, [dataAttributes()]);
+hydra.registerMediator(FormPart, [dataAttributes()]);
 
-// Usage in PageEntry
-hydra.registerPageEntry(SettingsPage, [
-  pagePart(FormPart, { qualifier: 'profile' }),
-  pagePart(FormPart, { qualifier: 'password' })
+// Usage in PageController
+hydra.registerPageController(SettingsPage, [
+  mediator(FormPart, { qualifier: 'profile' }),
+  mediator(FormPart, { qualifier: 'password' })
 ]);
 ```
 
 ```html
-<div data-hydra-pagepart="FormPart" data-hydra-qualifier="profile">
+<div data-hydra-mediator="FormPart" data-hydra-qualifier="profile">
   <input data-hydra-element="input" type="text" />
 </div>
 
-<div data-hydra-pagepart="FormPart" data-hydra-qualifier="password">
+<div data-hydra-mediator="FormPart" data-hydra-qualifier="password">
   <input data-hydra-element="input" type="password" />
 </div>
 ```
@@ -462,13 +462,13 @@ src/
 ├── services/           # Business logic, API clients
 │   ├── ApiService.ts
 │   └── UserService.ts
-├── pageparts/          # Event-capable components
-│   ├── NotificationPart.ts
-│   └── ModalPart.ts
+├── mediators/          # Event-capable components
+│   ├── NotificationMediator.ts
+│   └── ModalMediator.ts
 ├── components/         # Reusable UI components
 │   ├── CardComponent.ts
 │   └── ListComponent.ts
-├── pages/              # PageEntry controllers
+├── pages/              # PageController controllers
 │   ├── HomePage.ts
 │   └── SettingsPage.ts
 ├── contexts/           # Hydra registrations
@@ -486,7 +486,7 @@ export const AuthContext: HydraContext = {
   register(hydra: Hydra): void {
     hydra.registerService(AuthService);
     hydra.registerService(SessionService, [service(AuthService)]);
-    hydra.registerPagePart(LoginFormPart, [dataAttributes()]);
+    hydra.registerMediator(LoginFormPart, [dataAttributes()]);
   }
 };
 
@@ -494,7 +494,7 @@ export const AuthContext: HydraContext = {
 export const DashboardContext: HydraContext = {
   register(hydra: Hydra): void {
     hydra.registerService(AnalyticsService);
-    hydra.registerPagePart(ChartPart, [chartElements]);
+    hydra.registerMediator(ChartPart, [chartElements]);
   }
 };
 
@@ -557,20 +557,20 @@ Hydra.registerContext(context: HydraContext): void
 
 // Instance methods
 hydra.registerService(constructor, dependencies?): void
-hydra.registerPagePart(constructor, dependencies): void
-hydra.registerPageEntry(constructor, dependencies): void
+hydra.registerMediator(constructor, dependencies): void
+hydra.registerPageController(constructor, dependencies): void
 hydra.registerServiceInstance(instance, name?): HydraRegistry
 hydra.registerComponentInstance(instance, name?): HydraRegistry
 hydra.getServiceInstance(type, name?): T
 hydra.getComponentInstance(type, name?): T
-hydra.getPagePartInstance(definition): Loadable
+hydra.getMediatorInstance(definition): Loadable
 ```
 
 ### Dependency Functions
 
 ```typescript
 service(ServiceType)                    // Inject a service
-pagePart(PagePartType, options?)        // Inject a PagePart
+mediator(MediatorType, options?)        // Inject a Mediator
 value(v)                                // Inject a constant
 dataAttributes()                        // Auto-discover elements
 htmlElementDescriptor(selector, type)   // Single element descriptor
@@ -587,8 +587,8 @@ assertElementTypes(elements, Type, context?) // Validate collection
 ### Discovery Utilities
 
 ```typescript
-discoverPageParts(root?): DiscoveredPagePart[]
-findPagePart(discovered, name, qualifier?): DiscoveredPagePart | undefined
+discoverMediators(root?): DiscoveredMediator[]
+findMediator(discovered, name, qualifier?): DiscoveredMediator | undefined
 ```
 
 ---
@@ -598,7 +598,7 @@ findPagePart(discovered, name, qualifier?): DiscoveredPagePart | undefined
 See [`examples/notes-app/`](examples/notes-app/) for a complete working example demonstrating:
 
 - Services (NoteService)
-- PageParts with events (NotificationPart, AppStatePart, StatusPart)
+- Mediators with events (NotificationPart, AppStatePart, StatusPart)
 - Components with subcomponents (NoteListComponent, NoteEditorComponent)
 - Both element binding approaches (traditional + data attributes)
 - Template cloning for dynamic lists
@@ -619,7 +619,7 @@ npm run dev
 
 ## Dependencies
 
-- **RxJS** (^7.0.0) - For reactive event handling in PageParts
+- **RxJS** (^7.0.0) - For reactive event handling in Mediators
 
 ## License
 
