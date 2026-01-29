@@ -1,9 +1,9 @@
 import { BaseComponent } from './BaseComponent';
 import { Component } from './Component';
-import { discoverPageParts, findPagePart } from './DataAttributes';
+import { discoverMediators, findMediator } from './DataAttributes';
 import Loadable from './Loadable';
-import PageEntry from './PageEntry';
-import PagePart from './PagePart';
+import Mediator from './Mediator';
+import PageController from './PageController';
 import { cloneTemplateContent, getAllElementsBySelector, getFirstElementBySelector } from './View';
 
 declare global {
@@ -12,22 +12,23 @@ declare global {
   }
 }
 
-export type PageEntryConstructor = new (...args: any[]) => PageEntry;
-export type PageEntryDefinitionParameter =
+// New names
+export type PageControllerConstructor = new (...args: any[]) => PageController;
+export type PageControllerDefinitionParameter =
   | ServiceDependencyDefinition
-  | PagePartDependencyDefinition
+  | MediatorDependencyDefinition
   | PageElementContainer
   | ValueDependencyDefinition;
-export type PagePartConstructor<EventType, T extends PagePart<EventType> = PagePart<EventType>> = new (...args: any[]) => T;
-export type PagePartDefinitionParameter =
+export type MediatorConstructor<EventType, T extends Mediator<EventType> = Mediator<EventType>> = new (...args: any[]) => T;
+export type MediatorDefinitionParameter =
   | ServiceDependencyDefinition
-  | PagePartDependencyDefinition
+  | MediatorDependencyDefinition
   | PageElementContainer
   | ValueDependencyDefinition
   | DataAttributesMarker;
 export type ServiceConstructor = new (...args: any[]) => any;
 export type ServiceDefinitionParameter = ServiceDependencyDefinition | ValueDependencyDefinition;
-export interface PagePartOptions {
+export interface MediatorOptions {
   qualifier: string;
   [key: string]: any;
 }
@@ -45,15 +46,15 @@ export interface HydraRepository {
 export type ConstructorOf<T> = new (...args: any[]) => T;
 
 export default class Hydra implements HydraRegistry, HydraRepository {
-  private pageEntrieDefinitions: {
-    [pageEntryName: string]: [PageEntryConstructor, PageEntryDefinitionParameter[]];
+  private pageControllerDefinitions: {
+    [name: string]: [PageControllerConstructor, PageControllerDefinitionParameter[]];
   } = {};
-  private pagePartDefinitions: { [pagePartName: string]: [PagePartConstructor<any>, PagePartDefinitionParameter[]] } = {};
+  private mediatorDefinitions: { [name: string]: [MediatorConstructor<any>, MediatorDefinitionParameter[]] } = {};
   private serviceDefinitions: { [serviceName: string]: [ServiceConstructor, ServiceDefinitionParameter[]] } = {};
 
   private services: { [serviceName: string]: any | undefined } = {};
-  private pageParts: { [pagePartName: string]: PagePart<any> } = {};
-  private pageEntries: { [pageEntryName: string]: Loadable } = {};
+  private mediators: { [name: string]: Mediator<any> } = {};
+  private pageControllers: { [name: string]: Loadable } = {};
   private components: { [name: string]: BaseComponent | undefined } = {};
 
   static registerContext(context: HydraContext) {
@@ -64,12 +65,13 @@ export default class Hydra implements HydraRegistry, HydraRepository {
     context.register(this, options);
   }
 
-  registerPageEntry(constructor: PageEntryConstructor, dependencies: PageEntryDefinitionParameter[]) {
-    this.pageEntrieDefinitions[constructor.name] = [constructor, dependencies];
+  // New API methods
+  registerPageController(constructor: PageControllerConstructor, dependencies: PageControllerDefinitionParameter[]) {
+    this.pageControllerDefinitions[constructor.name] = [constructor, dependencies];
   }
 
-  registerPagePart<EventType>(pagePartConstructor: PagePartConstructor<EventType>, dependencies: PagePartDefinitionParameter[]) {
-    this.pagePartDefinitions[pagePartConstructor.name] = [pagePartConstructor, dependencies];
+  registerMediator<EventType>(mediatorConstructor: MediatorConstructor<EventType>, dependencies: MediatorDefinitionParameter[]) {
+    this.mediatorDefinitions[mediatorConstructor.name] = [mediatorConstructor, dependencies];
   }
 
   registerService(serviceConstructor: ServiceConstructor, dependencies: ServiceDefinitionParameter[] = []) {
@@ -115,8 +117,8 @@ export default class Hydra implements HydraRegistry, HydraRepository {
         this.services[serviceName] = this.constructService(serviceConstructor, serviceDecoratorOptions);
       });
 
-      Object.entries(this.pageEntrieDefinitions).forEach(([pageEntryName, [pageEntryConstructor, pageEntryDependencyDefinitions]]) => {
-        this.pageEntries[pageEntryName] = this.constructPageEntry(pageEntryConstructor, pageEntryDependencyDefinitions);
+      Object.entries(this.pageControllerDefinitions).forEach(([name, [constructor, dependencies]]) => {
+        this.pageControllers[name] = this.constructPageController(constructor, dependencies);
       });
 
       const serviceLoadPromises = Object.values(this.services).map((s) => {
@@ -127,14 +129,14 @@ export default class Hydra implements HydraRegistry, HydraRepository {
         }
       });
       await Promise.all(serviceLoadPromises);
-      const pagePartLoadPromises = Object.values(this.pageParts).map((pp) => this.load(pp));
-      await Promise.all(pagePartLoadPromises);
-      const pageEntryLoadPromises = Object.values(this.pageEntries).map((pe) => this.load(pe));
-      await Promise.all(pageEntryLoadPromises);
+      const mediatorLoadPromises = Object.values(this.mediators).map((m) => this.load(m));
+      await Promise.all(mediatorLoadPromises);
+      const pageControllerLoadPromises = Object.values(this.pageControllers).map((pc) => this.load(pc));
+      await Promise.all(pageControllerLoadPromises);
 
       this.serviceDefinitions = {};
-      this.pageEntrieDefinitions = {};
-      this.pagePartDefinitions = {};
+      this.pageControllerDefinitions = {};
+      this.mediatorDefinitions = {};
     } catch (err) {
       console.error('Error during load time', err);
     }
@@ -167,50 +169,50 @@ export default class Hydra implements HydraRegistry, HydraRepository {
     return this.services[serviceConstructor.name];
   }
 
-  private constructPagePart<EventType, T extends PagePart<EventType>>(
-    pagePartConstructor: PagePartConstructor<EventType, T>,
-    parameters: PagePartDefinitionParameter[],
-    options?: PagePartOptions
+  private constructMediator<EventType, T extends Mediator<EventType>>(
+    mediatorConstructor: MediatorConstructor<EventType, T>,
+    parameters: MediatorDefinitionParameter[],
+    options?: MediatorOptions
   ): T {
     const nameSuffix = options?.qualifier ? `_${options.qualifier}` : '';
-    const pagePartName = `${pagePartConstructor.name}${nameSuffix}`;
-    const alreadyConstructed = this.pageParts[pagePartName];
+    const mediatorName = `${mediatorConstructor.name}${nameSuffix}`;
+    const alreadyConstructed = this.mediators[mediatorName];
     if (alreadyConstructed) {
       return alreadyConstructed as T;
     }
 
-    const dependencies = this.resolveDependencies(parameters, options, pagePartConstructor.name);
-    const constructed = new pagePartConstructor(...dependencies, options);
-    this.pageParts[pagePartName] = constructed;
+    const dependencies = this.resolveDependencies(parameters, options, mediatorConstructor.name);
+    const constructed = new mediatorConstructor(...dependencies, options);
+    this.mediators[mediatorName] = constructed;
     return constructed;
   }
 
-  private constructPageEntry(pageEntryConstructor: PageEntryConstructor, parameters: PageEntryDefinitionParameter[]): Loadable {
-    const alreadyConstructed = this.pageEntries[pageEntryConstructor.name];
+  private constructPageController(constructor: PageControllerConstructor, parameters: PageControllerDefinitionParameter[]): Loadable {
+    const alreadyConstructed = this.pageControllers[constructor.name];
     if (alreadyConstructed) {
       return alreadyConstructed;
     }
 
     const dependencies = this.resolveDependencies(parameters);
-    this.pageEntries[pageEntryConstructor.name] = new pageEntryConstructor(...dependencies);
-    return this.pageEntries[pageEntryConstructor.name];
+    this.pageControllers[constructor.name] = new constructor(...dependencies);
+    return this.pageControllers[constructor.name];
   }
 
   private resolveDependencies(
-    parameters: PagePartDefinitionParameter[] | PageEntryDefinitionParameter[],
-    options?: PagePartOptions,
-    pagePartName?: string
+    parameters: MediatorDefinitionParameter[] | PageControllerDefinitionParameter[],
+    options?: MediatorOptions,
+    mediatorName?: string
   ) {
     const dependencies = [];
     const elementDependencies: any = {};
     for (const param of parameters) {
       if (isServiceDependencyDefinition(param)) {
         dependencies.push(this.getServiceInstance(param.serviceType));
-      } else if (isPagePartDependencyDefinition(param)) {
-        dependencies.push(this.getPagePartInstance(param));
+      } else if (isMediatorDependencyDefinition(param)) {
+        dependencies.push(this.getMediatorInstance(param));
       } else if (isDataAttributesMarker(param)) {
         // Auto-discover elements from DOM using data attributes
-        const elements = this.discoverElementsFromDataAttributes(pagePartName, options?.qualifier);
+        const elements = this.discoverElementsFromDataAttributes(mediatorName, options?.qualifier);
         dependencies.push(elements);
       } else if (isPageElementContainer(param)) {
         const result = pageElements(param, document, options);
@@ -226,24 +228,24 @@ export default class Hydra implements HydraRegistry, HydraRepository {
   }
 
   private discoverElementsFromDataAttributes(
-    pagePartName?: string,
+    mediatorName?: string,
     qualifier?: string
   ): Record<string, HTMLElement | HTMLElement[]> {
-    if (!pagePartName) {
-      throw new Error('Cannot discover elements via data attributes without a PagePart name');
+    if (!mediatorName) {
+      throw new Error('Cannot discover elements via data attributes without a Mediator name');
     }
 
-    const discovered = discoverPageParts(document);
-    const pagePart = findPagePart(discovered, pagePartName, qualifier);
+    const discovered = discoverMediators(document);
+    const mediator = findMediator(discovered, mediatorName, qualifier);
 
-    if (!pagePart) {
+    if (!mediator) {
       throw new Error(
-        `Could not find PagePart "${pagePartName}"${qualifier ? ` with qualifier "${qualifier}"` : ''} in the DOM. ` +
-          `Make sure to add data-hydra-pagepart="${pagePartName}" to an element.`
+        `Could not find Mediator "${mediatorName}"${qualifier ? ` with qualifier "${qualifier}"` : ''} in the DOM. ` +
+          `Make sure to add data-hydra-mediator="${mediatorName}" to an element.`
       );
     }
 
-    return pagePart.elements;
+    return mediator.elements;
   }
 
   getServiceInstance<ServiceType>(serviceType: ConstructorOf<ServiceType>, name?: string): ServiceType {
@@ -267,15 +269,15 @@ export default class Hydra implements HydraRegistry, HydraRepository {
     return comp;
   }
 
-  getPagePartInstance(definition: PagePartDependencyDefinition): Loadable {
-    const ppd = this.pagePartDefinitions[definition.pagePartType.name];
-    if (!ppd) {
+  getMediatorInstance(definition: MediatorDependencyDefinition): Loadable {
+    const md = this.mediatorDefinitions[definition.mediatorType.name];
+    if (!md) {
       throw new Error(
-        'Could not find definition for ' + definition.pagePartType.name + ' make sure you decorate it with the PagePart decorator'
+        'Could not find definition for ' + definition.mediatorType.name + '. Make sure to register it with registerMediator.'
       );
     }
-    const [pagePartConstructor, pagePartDecoratorOptions] = ppd;
-    return this.constructPagePart(pagePartConstructor, pagePartDecoratorOptions, definition.options);
+    const [mediatorConstructor, mediatorDefinitionParams] = md;
+    return this.constructMediator(mediatorConstructor, mediatorDefinitionParams, definition.options);
   }
 
   static getInstance(): Hydra {
@@ -303,20 +305,20 @@ export function service(serviceType: new (...args: any[]) => any): ServiceDepend
   return { serviceType };
 }
 
-export interface PagePartDependencyDefinition {
-  pagePartType: new (...args: unknown[]) => Loadable;
-  options?: PagePartOptions;
+export interface MediatorDependencyDefinition {
+  mediatorType: new (...args: unknown[]) => Loadable;
+  options?: MediatorOptions;
 }
 
-export function isPagePartDependencyDefinition(definition: unknown): definition is PagePartDependencyDefinition {
-  return typeof definition === 'object' && definition !== null && 'pagePartType' in definition;
+export function isMediatorDependencyDefinition(definition: unknown): definition is MediatorDependencyDefinition {
+  return typeof definition === 'object' && definition !== null && 'mediatorType' in definition;
 }
 
-export function pagePart<EventType, T extends PagePart<EventType>>(
-  pagePartType: PagePartConstructor<EventType, T>,
-  options?: PagePartOptions
-): PagePartDependencyDefinition {
-  return { pagePartType, options };
+export function mediator<EventType, T extends Mediator<EventType>>(
+  mediatorType: MediatorConstructor<EventType, T>,
+  options?: MediatorOptions
+): MediatorDependencyDefinition {
+  return { mediatorType, options };
 }
 
 type Selector = string | ((options: any) => string);
@@ -396,7 +398,7 @@ export function value(v: any): ValueDependencyDefinition {
 
 /**
  * Marker for data-attribute based element discovery.
- * When used in PagePart registration, Hydra will auto-discover elements
+ * When used in Mediator registration, Hydra will auto-discover elements
  * from the DOM using data-hydra-element attributes.
  */
 export interface DataAttributesMarker {
@@ -413,10 +415,10 @@ export function isDataAttributesMarker(value: unknown): value is DataAttributesM
  * @example
  * ```typescript
  * // In context registration:
- * hydra.registerPagePart(NotificationPart, [dataAttributes()]);
+ * hydra.registerMediator(NotificationPart, [dataAttributes()]);
  *
  * // In HTML:
- * <div data-hydra-pagepart="NotificationPart">
+ * <div data-hydra-mediator="NotificationPart">
  *   <div data-hydra-element="container"></div>
  * </div>
  * ```

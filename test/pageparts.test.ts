@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import Hydra, { service, pagePart } from '../src/Hydra';
-import type PageEntry from '../src/PageEntry';
-import type PagePart from '../src/PagePart';
-import { AbstractPagePart } from '../src/AbstractPagePart';
+import Hydra, { service, mediator } from '../src/Hydra';
+import type PageController from '../src/PageController';
+import type Mediator from '../src/Mediator';
+import { AbstractMediator } from '../src/AbstractMediator';
 import { firstValueFrom, take, toArray } from 'rxjs';
 
 /**
- * PagePart Tests
+ * Mediator Tests
  *
- * PageParts are event-capable components that facilitate communication
+ * Mediators are event-capable components that facilitate communication
  * between different parts of your application. They extend Loadable
  * and provide a typed event system with RxJS Observable support.
  *
@@ -18,7 +18,7 @@ import { firstValueFrom, take, toArray } from 'rxjs';
  * - Subscription management via subscriptionBag
  * - Lifecycle management (load/unload)
  */
-describe('PageParts', () => {
+describe('Mediators', () => {
 
   beforeEach(() => {
     if ((window as any).hydra) {
@@ -28,22 +28,22 @@ describe('PageParts', () => {
   });
 
   /**
-   * Example 1: Basic PagePart with Events
+   * Example 1: Basic Mediator with Events
    *
-   * This example demonstrates creating a PagePart that emits events
+   * This example demonstrates creating a Mediator that emits events
    * when user actions occur. Other parts of the application can
    * listen to these events to respond accordingly.
    */
   it('should emit and listen to typed events', async () => {
-    // Define the event types for this PagePart
+    // Define the event types for this Mediator
     interface CartEvents {
       itemAdded: { productId: string; quantity: number };
       itemRemoved: { productId: string };
       cartCleared: void;
     }
 
-    // Create a PagePart that manages shopping cart state
-    class ShoppingCartPart extends AbstractPagePart<CartEvents> {
+    // Create a Mediator that manages shopping cart state
+    class ShoppingCartMediator extends AbstractMediator<CartEvents> {
       private items: Map<string, number> = new Map();
 
       load() {
@@ -71,8 +71,8 @@ describe('PageParts', () => {
       }
     }
 
-    // Create the PagePart
-    const cart = new ShoppingCartPart();
+    // Create the Mediator
+    const cart = new ShoppingCartMediator();
 
     // Track events received
     const addedItems: Array<{ productId: string; quantity: number }> = [];
@@ -119,7 +119,7 @@ describe('PageParts', () => {
       notify: string;
     }
 
-    class NotificationPart extends AbstractPagePart<NotificationEvents> {
+    class NotificationMediator extends AbstractMediator<NotificationEvents> {
       load() {}
 
       sendNotification(message: string) {
@@ -127,7 +127,7 @@ describe('PageParts', () => {
       }
     }
 
-    const notifications = new NotificationPart();
+    const notifications = new NotificationMediator();
     const receivedMessages: string[] = [];
 
     // Create a listener function (must keep reference for removal)
@@ -161,7 +161,7 @@ describe('PageParts', () => {
       login: { userId: string; timestamp: Date };
     }
 
-    class AuthPart extends AbstractPagePart<UserEvents> {
+    class AuthMediator extends AbstractMediator<UserEvents> {
       load() {}
 
       login(userId: string) {
@@ -169,7 +169,7 @@ describe('PageParts', () => {
       }
     }
 
-    const auth = new AuthPart();
+    const auth = new AuthMediator();
 
     // Multiple systems want to know about login
     const analyticsEvents: string[] = [];
@@ -200,7 +200,7 @@ describe('PageParts', () => {
   /**
    * Example 4: RxJS Observable Integration
    *
-   * PageParts provide RxJS Observable streams via fromPagePartEvent().
+   * Mediators provide RxJS Observable streams via fromEvent().
    * This enables reactive patterns like filtering, mapping, debouncing,
    * and combining event streams.
    */
@@ -210,7 +210,7 @@ describe('PageParts', () => {
       resultCount: number;
     }
 
-    class SearchPart extends AbstractPagePart<SearchEvents> {
+    class SearchMediator extends AbstractMediator<SearchEvents> {
       load() {}
 
       performSearch(query: string) {
@@ -221,11 +221,11 @@ describe('PageParts', () => {
       }
     }
 
-    const search = new SearchPart();
+    const search = new SearchMediator();
 
     // Create observables for events
-    const search$ = search.fromPagePartEvent('search');
-    const results$ = search.fromPagePartEvent('resultCount');
+    const search$ = search.fromEvent('search');
+    const results$ = search.fromEvent('resultCount');
 
     // Collect emitted values
     const searchQueries: string[] = [];
@@ -259,7 +259,7 @@ describe('PageParts', () => {
       priceUpdate: { symbol: string; price: number };
     }
 
-    class StockTickerPart extends AbstractPagePart<StockEvents> {
+    class StockTickerMediator extends AbstractMediator<StockEvents> {
       load() {}
 
       updatePrice(symbol: string, price: number) {
@@ -267,10 +267,10 @@ describe('PageParts', () => {
       }
     }
 
-    const ticker = new StockTickerPart();
+    const ticker = new StockTickerMediator();
 
     // Get observable and collect first 3 updates
-    const priceUpdates$ = ticker.fromPagePartEvent('priceUpdate').pipe(
+    const priceUpdates$ = ticker.fromEvent('priceUpdate').pipe(
       take(3),
       toArray()
     );
@@ -296,7 +296,7 @@ describe('PageParts', () => {
   /**
    * Example 6: Observable Cleanup on Unsubscribe
    *
-   * When you unsubscribe from a PagePart observable, the underlying
+   * When you unsubscribe from a Mediator observable, the underlying
    * listener is automatically removed. This prevents memory leaks.
    */
   it('should clean up listeners when observable is unsubscribed', async () => {
@@ -304,7 +304,7 @@ describe('PageParts', () => {
       ping: number;
     }
 
-    class PingPart extends AbstractPagePart<PingEvents> {
+    class PingMediator extends AbstractMediator<PingEvents> {
       load() {}
 
       ping(value: number) {
@@ -312,39 +312,39 @@ describe('PageParts', () => {
       }
     }
 
-    const pingPart = new PingPart();
+    const pingMediator = new PingMediator();
     const received: number[] = [];
 
     // Subscribe to observable
-    const subscription = pingPart.fromPagePartEvent('ping').subscribe(
+    const subscription = pingMediator.fromEvent('ping').subscribe(
       value => received.push(value)
     );
 
     // Emit while subscribed
-    pingPart.ping(1);
-    pingPart.ping(2);
+    pingMediator.ping(1);
+    pingMediator.ping(2);
     expect(received).toEqual([1, 2]);
 
     // Unsubscribe
     subscription.unsubscribe();
 
     // Emit after unsubscribe - should not be received
-    pingPart.ping(3);
+    pingMediator.ping(3);
     expect(received).toEqual([1, 2]); // Still only 1, 2
   });
 
   /**
-   * Example 7: PagePart with Dependency Injection
+   * Example 7: Mediator with Dependency Injection
    *
-   * PageParts can be registered with Hydra and injected into
-   * PageEntries or other PageParts using the pagePart() dependency.
+   * Mediators can be registered with Hydra and injected into
+   * PageEntries or other Mediators using the mediator() dependency.
    */
-  it('should inject PageParts into PageEntries', async () => {
+  it('should inject Mediators into PageEntries', async () => {
     interface MessageEvents {
       newMessage: { from: string; text: string };
     }
 
-    class MessageBusPart extends AbstractPagePart<MessageEvents> {
+    class MessageBusMediator extends AbstractMediator<MessageEvents> {
       load() {}
 
       broadcast(from: string, text: string) {
@@ -353,10 +353,10 @@ describe('PageParts', () => {
     }
 
     // PageEntry that uses the MessageBus
-    class ChatPage implements PageEntry {
+    class ChatPage implements PageController {
       public messages: Array<{ from: string; text: string }> = [];
 
-      constructor(private messageBus: MessageBusPart) {
+      constructor(private messageBus: MessageBusMediator) {
         this.messageBus.addListener('newMessage', (msg) => {
           this.messages.push(msg);
         });
@@ -372,13 +372,13 @@ describe('PageParts', () => {
     // Bootstrap with Hydra
     const hydra = Hydra.getInstance();
 
-    hydra.registerPagePart(MessageBusPart, []);
-    hydra.registerPageEntry(ChatPage, [pagePart(MessageBusPart)]);
+    hydra.registerMediator(MessageBusMediator, []);
+    hydra.registerPageController(ChatPage, [mediator(MessageBusMediator)]);
 
     await (hydra as any).boot();
 
     // Verify messages were received
-    const chatPage = hydra['pageEntries']['ChatPage'] as ChatPage;
+    const chatPage = hydra['pageControllers']['ChatPage'] as ChatPage;
     expect(chatPage.messages).toEqual([
       { from: 'Alice', text: 'Hello!' },
       { from: 'Bob', text: 'Hi there!' }
@@ -386,17 +386,17 @@ describe('PageParts', () => {
   });
 
   /**
-   * Example 8: Qualified PageParts
+   * Example 8: Qualified Mediators
    *
-   * When you need multiple instances of the same PagePart type,
+   * When you need multiple instances of the same Mediator type,
    * use qualifiers to distinguish between them.
    */
-  it('should support qualified PagePart instances', async () => {
+  it('should support qualified Mediator instances', async () => {
     interface CounterEvents {
       incremented: number;
     }
 
-    class CounterPart extends AbstractPagePart<CounterEvents> {
+    class CounterMediator extends AbstractMediator<CounterEvents> {
       private count = 0;
 
       load() {}
@@ -412,10 +412,10 @@ describe('PageParts', () => {
     }
 
     // PageEntry using two separate counters
-    class DualCounterPage implements PageEntry {
+    class DualCounterPage implements PageController {
       constructor(
-        private leftCounter: CounterPart,
-        private rightCounter: CounterPart
+        private leftCounter: CounterMediator,
+        private rightCounter: CounterMediator
       ) {}
 
       async load() {
@@ -434,27 +434,27 @@ describe('PageParts', () => {
 
     const hydra = Hydra.getInstance();
 
-    // Register the same PagePart type twice (it will create separate instances with qualifiers)
-    hydra.registerPagePart(CounterPart, []);
+    // Register the same Mediator type twice (it will create separate instances with qualifiers)
+    hydra.registerMediator(CounterMediator, []);
 
-    hydra.registerPageEntry(DualCounterPage, [
-      pagePart(CounterPart, { qualifier: 'left' }),
-      pagePart(CounterPart, { qualifier: 'right' })
+    hydra.registerPageController(DualCounterPage, [
+      mediator(CounterMediator, { qualifier: 'left' }),
+      mediator(CounterMediator, { qualifier: 'right' })
     ]);
 
     await (hydra as any).boot();
 
-    const page = hydra['pageEntries']['DualCounterPage'] as DualCounterPage;
+    const page = hydra['pageControllers']['DualCounterPage'] as DualCounterPage;
     expect(page.getCounts()).toEqual({ left: 2, right: 1 });
   });
 
   /**
-   * Example 9: Communication Between PageParts
+   * Example 9: Communication Between Mediators
    *
-   * PageParts can communicate with each other through events.
+   * Mediators can communicate with each other through events.
    * This enables loose coupling between different parts of your application.
    */
-  it('should enable communication between PageParts', async () => {
+  it('should enable communication between Mediators', async () => {
     // Events for the form
     interface FormEvents {
       submitted: { email: string };
@@ -465,7 +465,7 @@ describe('PageParts', () => {
       show: { message: string; type: 'success' | 'error' };
     }
 
-    class FormPart extends AbstractPagePart<FormEvents> {
+    class FormMediator extends AbstractMediator<FormEvents> {
       load() {}
 
       submit(email: string) {
@@ -473,7 +473,7 @@ describe('PageParts', () => {
       }
     }
 
-    class ToastPart extends AbstractPagePart<ToastEvents> {
+    class ToastMediator extends AbstractMediator<ToastEvents> {
       public displayedToasts: Array<{ message: string; type: string }> = [];
 
       load() {}
@@ -485,10 +485,10 @@ describe('PageParts', () => {
     }
 
     // Coordinator that wires them together
-    class SubscriptionPage implements PageEntry {
+    class SubscriptionPage implements PageController {
       constructor(
-        private form: FormPart,
-        private toast: ToastPart
+        private form: FormMediator,
+        private toast: ToastMediator
       ) {
         // Wire up: when form is submitted, show a toast
         this.form.addListener('submitted', (data) => {
@@ -505,20 +505,20 @@ describe('PageParts', () => {
 
     const hydra = Hydra.getInstance();
 
-    hydra.registerPagePart(FormPart, []);
-    hydra.registerPagePart(ToastPart, []);
-    hydra.registerPageEntry(SubscriptionPage, [
-      pagePart(FormPart),
-      pagePart(ToastPart)
+    hydra.registerMediator(FormMediator, []);
+    hydra.registerMediator(ToastMediator, []);
+    hydra.registerPageController(SubscriptionPage, [
+      mediator(FormMediator),
+      mediator(ToastMediator)
     ]);
 
     await (hydra as any).boot();
 
-    const page = hydra['pageEntries']['SubscriptionPage'] as SubscriptionPage;
+    const page = hydra['pageControllers']['SubscriptionPage'] as SubscriptionPage;
     page.submitEmail('user@example.com');
 
     // Verify the toast was shown
-    const toast = hydra['pageParts']['ToastPart'] as ToastPart;
+    const toast = hydra['mediators']['ToastMediator'] as ToastMediator;
     expect(toast.displayedToasts).toEqual([
       { message: 'Subscribed: user@example.com', type: 'success' }
     ]);
@@ -527,7 +527,7 @@ describe('PageParts', () => {
   /**
    * Example 10: Real-World Pattern - State Management
    *
-   * PageParts can serve as a lightweight state management solution.
+   * Mediators can serve as a lightweight state management solution.
    * Components subscribe to state changes and react accordingly.
    */
   it('should demonstrate state management pattern', async () => {
@@ -542,7 +542,7 @@ describe('PageParts', () => {
       permissionsChanged: string[];
     }
 
-    class AuthStatePart extends AbstractPagePart<AuthStateEvents> {
+    class AuthStateMediator extends AbstractMediator<AuthStateEvents> {
       private currentUser: User | null = null;
       private permissions: string[] = [];
 
@@ -575,7 +575,7 @@ describe('PageParts', () => {
       }
     }
 
-    const authState = new AuthStatePart();
+    const authState = new AuthStateMediator();
 
     // Track state changes
     const userChanges: Array<User | null> = [];

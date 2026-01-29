@@ -1,14 +1,14 @@
-import { AbstractPagePart, assertElementType } from '@mikeseghers/hydra';
+import { AbstractMediator, assertElementType } from '@mikeseghers/hydra';
 
 /**
- * Events emitted by the StatusPart.
+ * Events emitted by the StatusMediator.
  */
 export interface StatusEvents {
   statusChanged: { status: string };
 }
 
 /**
- * Elements interface - defines what this PagePart expects.
+ * Elements interface - defines what this Mediator expects.
  * When using dataAttributes(), these are discovered from the DOM
  * via data-hydra-element attributes.
  */
@@ -18,16 +18,16 @@ interface Elements {
 }
 
 /**
- * StatusPart - Displays application status using DATA ATTRIBUTES approach.
+ * StatusMediator - Displays application status using DATA ATTRIBUTES approach.
  *
- * This PagePart demonstrates the data-attribute bootstrapping pattern:
+ * This Mediator demonstrates the data-attribute bootstrapping pattern:
  * - No htmlElementDescriptor() calls needed in the context
  * - Elements are discovered from DOM via data-hydra-element attributes
  * - Type safety via assertElementType() at construction time
  *
  * HTML setup:
  * ```html
- * <div data-hydra-pagepart="StatusPart">
+ * <div data-hydra-mediator="StatusMediator">
  *   <span data-hydra-element="indicator"></span>
  *   <span data-hydra-element="statusText"></span>
  * </div>
@@ -35,10 +35,10 @@ interface Elements {
  *
  * Context registration:
  * ```typescript
- * hydra.registerPagePart(StatusPart, [dataAttributes()]);
+ * hydra.registerMediator(StatusMediator, [dataAttributes()]);
  * ```
  */
-export class StatusPart extends AbstractPagePart<StatusEvents> {
+export class StatusMediator extends AbstractMediator<StatusEvents> {
   #elements: Elements;
 
   constructor(discoveredElements: Record<string, HTMLElement | HTMLElement[]>) {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import Hydra from '../src/Hydra';
 import { pageElements, htmlElementDescriptor, htmlElementCollectionDescriptor } from '../src/Hydra';
-import type { default as PageEntry } from '../src/PageEntry';
+import type { default as PageController } from '../src/PageController';
 import { AbstractComponent } from '../src/AbstractComponent';
 
 /**
@@ -70,7 +70,7 @@ describe('Component Injection', () => {
     }
     
     // Define page entry that uses the component
-    class CounterPage implements PageEntry {
+    class CounterPage implements PageController {
       constructor(public component: CounterComponent) {}
       
       async load() {
@@ -86,7 +86,7 @@ describe('Component Injection', () => {
     
     // Register instances
     hydra.registerComponentInstance(component);
-    hydra.registerPageEntry(CounterPage, [{ value: component }]);
+    hydra.registerPageController(CounterPage, [{ value: component }]);
     
     await (hydra as any).boot();
     
@@ -151,7 +151,7 @@ describe('Component Injection', () => {
     }
     
     // Page entry
-    class UserPage implements PageEntry {
+    class UserPage implements PageController {
       constructor(public component: UserCardComponent) {}
       
       async load() {
@@ -170,7 +170,7 @@ describe('Component Injection', () => {
     // Register instances
     hydra.registerServiceInstance(userService);
     hydra.registerComponentInstance(component);
-    hydra.registerPageEntry(UserPage, [{ value: component }]);
+    hydra.registerPageController(UserPage, [{ value: component }]);
     
     await (hydra as any).boot();
     
@@ -258,7 +258,7 @@ describe('Component Injection', () => {
     }
     
     // Page entry using all components
-    class MainPage implements PageEntry {
+    class MainPage implements PageController {
       constructor(
         public header: HeaderComponent,
         public sidebar: SidebarComponent,
@@ -296,7 +296,7 @@ describe('Component Injection', () => {
     hydra.registerComponentInstance(sidebar, 'sidebar');
     hydra.registerComponentInstance(content, 'content');
     
-    hydra.registerPageEntry(MainPage, [
+    hydra.registerPageController(MainPage, [
       { value: header },
       { value: sidebar },
       { value: content }
@@ -367,7 +367,7 @@ describe('Component Injection', () => {
     }
     
     // Page entry
-    class TodoPage implements PageEntry {
+    class TodoPage implements PageController {
       constructor(public todoComponent: TodoComponent) {}
       
       async load() {
@@ -382,7 +382,7 @@ describe('Component Injection', () => {
     const component = new TodoComponent(rootElement, resolvedElements);
     
     hydra.registerComponentInstance(component);
-    hydra.registerPageEntry(TodoPage, [{ value: component }]);
+    hydra.registerPageController(TodoPage, [{ value: component }]);
     
     await (hydra as any).boot();
     
@@ -499,7 +499,7 @@ describe('Component Injection', () => {
     }
     
     // Page entry
-    class ContactPage implements PageEntry {
+    class ContactPage implements PageController {
       constructor(
         private notificationComponent: NotificationComponent,
         private formComponent: ContactFormComponent
@@ -538,7 +538,7 @@ describe('Component Injection', () => {
     hydra.registerComponentInstance(notificationComponent, 'notification');
     hydra.registerComponentInstance(formComponent, 'contactForm');
     
-    hydra.registerPageEntry(ContactPage, [
+    hydra.registerPageController(ContactPage, [
       { value: notificationComponent },
       { value: formComponent }
     ]);

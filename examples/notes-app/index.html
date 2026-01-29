@@ -296,11 +296,11 @@
 
   <!--
     Status bar (DATA ATTRIBUTES approach)
-    - data-hydra-pagepart="StatusPart" marks this as the PagePart root
+    - data-hydra-mediator="StatusMediator" marks this as the Mediator root
     - data-hydra-element="..." marks child elements by property name
     - Hydra discovers these automatically when using dataAttributes()
   -->
-  <div class="status-bar" data-hydra-pagepart="StatusPart">
+  <div class="status-bar" data-hydra-mediator="StatusMediator">
     <span class="status-indicator" data-hydra-element="indicator"></span>
     <span data-hydra-element="statusText">Initializing...</span>
   </div>

@@ -1,8 +1,8 @@
-import { AbstractPagePart } from '@mikeseghers/hydra';
+import { AbstractMediator } from '@mikeseghers/hydra';
 import { Note } from '../model/Note';
 
 /**
- * Events emitted by the AppStatePart.
+ * Events emitted by the AppStateMediator.
  *
  * Components subscribe to these events to react to state changes,
  * enabling loose coupling between UI components.
@@ -16,24 +16,24 @@ export interface AppStateEvents {
 }
 
 /**
- * Elements interface for AppStatePart (empty - no DOM elements needed).
+ * Elements interface for AppStateMediator (empty - no DOM elements needed).
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Elements {}
 
 /**
- * AppStatePart - Central state management for the notes application.
+ * AppStateMediator - Central state management for the notes application.
  *
- * This PagePart demonstrates:
+ * This PageMediator demonstrates:
  * - Centralized state management pattern
  * - Event-based state change notifications
  * - Decoupled component communication
  *
  * Components don't communicate directly with each other. Instead,
- * they emit events through AppStatePart, and other components
+ * they emit events through AppStateMediator, and other components
  * react to those events.
  */
-export class AppStatePart extends AbstractPagePart<AppStateEvents> {
+export class AppStateMediator extends AbstractMediator<AppStateEvents> {
   #selectedNote: Note | null = null;
   #notes: Note[] = [];
 
@@ -42,7 +42,7 @@ export class AppStatePart extends AbstractPagePart<AppStateEvents> {
   }
 
   load(): void {
-    // AppStatePart is ready
+    // AppStateMediator is ready
   }
 
   /**

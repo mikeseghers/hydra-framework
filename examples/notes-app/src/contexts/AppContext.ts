@@ -1,8 +1,8 @@
-import { Hydra, HydraContext, service, pagePart, htmlElementDescriptor, dataAttributes } from '@mikeseghers/hydra';
+import { Hydra, HydraContext, service, mediator, htmlElementDescriptor, dataAttributes } from '@mikeseghers/hydra';
 import { NoteService } from '../services/NoteService';
-import { NotificationPart } from '../pageparts/NotificationPart';
-import { AppStatePart } from '../pageparts/AppStatePart';
-import { StatusPart } from '../pageparts/StatusPart';
+import { NotificationMediator } from '../mediators/NotificationMediator';
+import { AppStateMediator } from '../mediators/AppStateMediator';
+import { StatusMediator } from '../mediators/StatusMediator';
 import { NotesPage } from '../pages/NotesPage';
 
 /**
@@ -13,18 +13,18 @@ import { NotesPage } from '../pages/NotesPage';
  * 1. TRADITIONAL APPROACH (htmlElementDescriptor):
  *    - Define element descriptors with CSS selectors
  *    - More explicit, works with any DOM structure
- *    - Example: NotificationPart below
+ *    - Example: NotificationMediator below
  *
  * 2. DATA ATTRIBUTES APPROACH (dataAttributes):
  *    - Elements discovered via data-hydra-element attributes in DOM
  *    - Self-documenting HTML, less boilerplate in context
- *    - Example: StatusPart below
+ *    - Example: StatusMediator below
  */
 
 // ============================================================
 // TRADITIONAL APPROACH: Element descriptors with CSS selectors
 // ============================================================
-const notificationPartElements = {
+const notificationMediatorElements = {
   container: htmlElementDescriptor('#notifications', HTMLDivElement)
 };
 
@@ -37,24 +37,24 @@ export const AppContext: HydraContext = {
     // TRADITIONAL: Using htmlElementDescriptor with CSS selectors
     // The context defines WHERE to find elements (#notifications)
     // --------------------------------------------------------
-    hydra.registerPagePart(NotificationPart, [notificationPartElements]);
+    hydra.registerMediator(NotificationMediator, [notificationMediatorElements]);
 
     // --------------------------------------------------------
     // DATA ATTRIBUTES: Using dataAttributes() marker
     // Elements are discovered from DOM via data-hydra-element
-    // HTML must have: data-hydra-pagepart="StatusPart"
+    // HTML must have: data-hydra-mediator="StatusMediator"
     // --------------------------------------------------------
-    hydra.registerPagePart(StatusPart, [dataAttributes()]);
+    hydra.registerMediator(StatusMediator, [dataAttributes()]);
 
-    // AppStatePart has no DOM elements
-    hydra.registerPagePart(AppStatePart, [{}]);
+    // AppStateMediator has no DOM elements
+    hydra.registerMediator(AppStateMediator, [{}]);
 
-    // Register page entries
-    hydra.registerPageEntry(NotesPage, [
+    // Register page controllers
+    hydra.registerPageController(NotesPage, [
       service(NoteService),
-      pagePart(NotificationPart),
-      pagePart(StatusPart),
-      pagePart(AppStatePart)
+      mediator(NotificationMediator),
+      mediator(StatusMediator),
+      mediator(AppStateMediator)
     ]);
   }
 };

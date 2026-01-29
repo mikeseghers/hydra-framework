@@ -1,4 +1,4 @@
-import { AbstractPagePart, htmlElementDescriptor } from '@mikeseghers/hydra';
+import { AbstractMediator, htmlElementDescriptor } from '@mikeseghers/hydra';
 import { cloneTemplateContent } from '@mikeseghers/hydra';
 
 /**
@@ -7,7 +7,7 @@ import { cloneTemplateContent } from '@mikeseghers/hydra';
 export type NotificationType = 'success' | 'error' | 'info';
 
 /**
- * Events emitted by the NotificationPart.
+ * Events emitted by the NotificationMediator.
  */
 export interface NotificationEvents {
   shown: { message: string; type: NotificationType };
@@ -22,16 +22,16 @@ const notificationDescriptors = {
 };
 
 /**
- * Elements required by the NotificationPart.
+ * Elements required by the NotificationMediator.
  */
 interface Elements {
   container: HTMLElement;
 }
 
 /**
- * NotificationPart - Manages toast notifications.
+ * NotificationMediator - Manages toast notifications.
  *
- * This PagePart demonstrates:
+ * This PageMediator demonstrates:
  * - Event emission for notification lifecycle
  * - Template-based DOM creation
  * - Auto-dismissal with timeouts
@@ -39,7 +39,7 @@ interface Elements {
  * Other parts of the application can listen to notification events
  * for analytics or logging purposes.
  */
-export class NotificationPart extends AbstractPagePart<NotificationEvents> {
+export class NotificationMediator extends AbstractMediator<NotificationEvents> {
   #elements: Elements;
   readonly #defaultDuration = 3000;
 
@@ -49,7 +49,7 @@ export class NotificationPart extends AbstractPagePart<NotificationEvents> {
   }
 
   load(): void {
-    // NotificationPart is ready to show notifications
+    // NotificationMediator is ready to show notifications
   }
 
   /**

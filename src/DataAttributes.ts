@@ -1,63 +1,64 @@
 /**
  * Data attribute names used by Hydra for auto-discovery.
+ *
  */
 export const HYDRA_DATA_ATTRIBUTES = {
-  /** Marks an element as the root of a PagePart. Value is the PagePart class name. */
-  PAGE_PART: 'data-hydra-pagepart',
-  /** Marks an element within a PagePart. Value is the property name in the elements container. */
+  /** Marks an element as the root of a Mediator. Value is the Mediator class name. */
+  MEDIATOR: 'data-hydra-mediator',
+  /** Marks an element within a Mediator. Value is the property name in the elements container. */
   ELEMENT: 'data-hydra-element',
   /** Marks an element as the root of a Component. Value is the Component class name. */
   COMPONENT: 'data-hydra-component',
-  /** Optional qualifier for PagePart instances. */
+  /** Optional qualifier for Mediator instances. */
   QUALIFIER: 'data-hydra-qualifier'
 } as const;
 
 /**
- * Result of auto-discovering elements for a PagePart.
+ * Result of auto-discovering elements for a Mediator.
  */
-export interface DiscoveredPagePart {
-  /** The PagePart class name */
+export interface DiscoveredMediator {
+  /** The Mediator class name */
   name: string;
   /** Optional qualifier for multiple instances */
   qualifier?: string;
-  /** The root element marked with data-hydra-pagepart */
+  /** The root element marked with data-hydra-mediator */
   rootElement: HTMLElement;
   /** Discovered child elements mapped by property name */
   elements: Record<string, HTMLElement | HTMLElement[]>;
 }
 
 /**
- * Auto-discovers all PageParts marked with data-hydra-pagepart in the DOM.
+ * Auto-discovers all Mediators marked with data-hydra-mediator in the DOM.
  *
  * @param root - The root element to search within (defaults to document)
- * @returns Array of discovered PagePart information
+ * @returns Array of discovered Mediator information
  *
  * @example
  * ```html
- * <div data-hydra-pagepart="NotificationPart">
+ * <div data-hydra-mediator="NotificationMediator">
  *   <div data-hydra-element="container"></div>
  * </div>
  * ```
  *
  * ```typescript
- * const parts = discoverPageParts(document);
- * // [{ name: 'NotificationPart', rootElement: div, elements: { container: div } }]
+ * const mediators = discoverMediators(document);
+ * // [{ name: 'NotificationMediator', rootElement: div, elements: { container: div } }]
  * ```
  */
-export function discoverPageParts(root: Document | Element = document): DiscoveredPagePart[] {
-  const pagePartRoots = root.querySelectorAll(`[${HYDRA_DATA_ATTRIBUTES.PAGE_PART}]`);
-  const discovered: DiscoveredPagePart[] = [];
+export function discoverMediators(root: Document | Element = document): DiscoveredMediator[] {
+  const mediatorRoots = root.querySelectorAll(`[${HYDRA_DATA_ATTRIBUTES.MEDIATOR}]`);
+  const discovered: DiscoveredMediator[] = [];
 
-  pagePartRoots.forEach((rootElement) => {
+  mediatorRoots.forEach((rootElement) => {
     if (!(rootElement instanceof HTMLElement)) return;
 
-    const name = rootElement.getAttribute(HYDRA_DATA_ATTRIBUTES.PAGE_PART);
+    const name = rootElement.getAttribute(HYDRA_DATA_ATTRIBUTES.MEDIATOR);
     if (!name) return;
 
     const qualifier = rootElement.getAttribute(HYDRA_DATA_ATTRIBUTES.QUALIFIER) ?? undefined;
     const elements: Record<string, HTMLElement | HTMLElement[]> = {};
 
-    // Find all elements within this PagePart root
+    // Find all elements within this Mediator root
     const elementNodes = rootElement.querySelectorAll(`[${HYDRA_DATA_ATTRIBUTES.ELEMENT}]`);
     elementNodes.forEach((elementNode) => {
       if (!(elementNode instanceof HTMLElement)) return;
@@ -175,29 +176,29 @@ export function assertElementTypes<T extends HTMLElement>(
 }
 
 /**
- * Type-safe helper to get and validate elements from a discovered PagePart.
+ * Type-safe helper to get and validate elements from a discovered Mediator.
  * Combines discovery lookup with type assertion.
  *
- * @param discovered - Array from discoverPageParts()
- * @param pagePartName - The PagePart class name to find
+ * @param discovered - Array from discoverMediators()
+ * @param mediatorName - The Mediator class name to find
  * @param qualifier - Optional qualifier for multiple instances
- * @returns The discovered PagePart or undefined
+ * @returns The discovered Mediator or undefined
  *
  * @example
  * ```typescript
- * const discovered = discoverPageParts(document);
- * const notification = findPagePart(discovered, 'NotificationPart');
+ * const discovered = discoverMediators(document);
+ * const notification = findMediator(discovered, 'NotificationMediator');
  * if (notification) {
  *   const container = assertElementType(notification.elements.container, HTMLDivElement);
  * }
  * ```
  */
-export function findPagePart(
-  discovered: DiscoveredPagePart[],
-  pagePartName: string,
+export function findMediator(
+  discovered: DiscoveredMediator[],
+  mediatorName: string,
   qualifier?: string
-): DiscoveredPagePart | undefined {
+): DiscoveredMediator | undefined {
   return discovered.find(
-    (p) => p.name === pagePartName && (qualifier === undefined || p.qualifier === qualifier)
+    (p) => p.name === mediatorName && (qualifier === undefined || p.qualifier === qualifier)
   );
 }

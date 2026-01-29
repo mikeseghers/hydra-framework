@@ -4,18 +4,19 @@ export type {
   HydraRegistry,
   HydraRepository,
   ConstructorOf,
-  PageEntryConstructor,
-  PagePartConstructor,
+  PageControllerConstructor,
+  MediatorConstructor,
+  MediatorOptions,
+  MediatorDependencyDefinition,
   ServiceConstructor,
-  PagePartOptions,
   PageElementContainer,
   PageElementFromContainerType,
   HTMLElementDescriptor,
-  HTMLElementCollectionDescriptor
+  HTMLElementCollectionDescriptor,
 } from './Hydra';
 export {
   service,
-  pagePart,
+  mediator,
   value,
   htmlElementDescriptor,
   htmlElementCollectionDescriptor,
@@ -28,16 +29,19 @@ export type { BaseComponent } from './BaseComponent';
 export type { Component } from './Component';
 export { AbstractComponent } from './AbstractComponent';
 export { AbstractBaseComponent } from './AbstractBaseComponent';
-export type { default as PagePart } from './PagePart';
-export { AbstractPagePart } from './AbstractPagePart';
-export type { default as PageEntry } from './PageEntry';
+
+export type { default as Mediator, MediatorListener, MediatorEventTypeKey } from './Mediator';
+export { AbstractMediator } from './AbstractMediator';
+export type { default as PageController } from './PageController';
+
 export type { default as Loadable } from './Loadable';
 export * from './View';
 export {
   HYDRA_DATA_ATTRIBUTES,
-  discoverPageParts,
-  findPagePart,
+  discoverMediators,
+  findMediator,
+  // Type assertion helpers
   assertElementType,
   assertElementTypes
 } from './DataAttributes';
-export type { DiscoveredPagePart } from './DataAttributes';
+export type { DiscoveredMediator } from './DataAttributes';

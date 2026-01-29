@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import Hydra from '../src/Hydra';
 import { service } from '../src/Hydra';
-import type { default as PageEntry } from '../src/PageEntry';
+import type { default as PageController } from '../src/PageController';
 
 /**
  * Bootstrap Tests
@@ -22,7 +22,7 @@ describe('Hydra Bootstrap', () => {
    */
   it('should bootstrap with a simple page entry', async () => {
     // Define a simple page entry
-    class SimplePage implements PageEntry {
+    class SimplePage implements PageController {
       public loaded = false;
       
       async load() {
@@ -34,13 +34,13 @@ describe('Hydra Bootstrap', () => {
     const hydra = Hydra.getInstance();
     
     // Register the page entry
-    hydra.registerPageEntry(SimplePage, []);
+    hydra.registerPageController(SimplePage, []);
     
     // Manually trigger boot (normally happens on window.onload)
     await hydra['boot']();
     
     // Verify the page was loaded
-    const pageEntries = hydra['pageEntries'];
+    const pageEntries = hydra['pageControllers'];
     expect(pageEntries['SimplePage']).toBeDefined();
   });
   
@@ -62,7 +62,7 @@ describe('Hydra Bootstrap', () => {
     }
     
     // Define a page entry that uses the service
-    class HomePage implements PageEntry {
+    class HomePage implements PageController {
       public loadedData: string[] = [];
       
       constructor(private dataService: DataService) {}
@@ -79,7 +79,7 @@ describe('Hydra Bootstrap', () => {
     hydra.registerService(DataService);
     
     // Register page entry with service dependency
-    hydra.registerPageEntry(HomePage, [service(DataService)]);
+    hydra.registerPageController(HomePage, [service(DataService)]);
     
     // Boot
     await hydra['boot']();
@@ -114,7 +114,7 @@ describe('Hydra Bootstrap', () => {
     }
     
     // Define page entry
-    class DashboardPage implements PageEntry {
+    class DashboardPage implements PageController {
       public apiResponse: any = null;
       
       constructor(
@@ -138,7 +138,7 @@ describe('Hydra Bootstrap', () => {
         hydra.registerService(AuthService);
         
         // Register page entry
-        hydra.registerPageEntry(DashboardPage, [
+        hydra.registerPageController(DashboardPage, [
           service(ApiService),
           service(AuthService)
         ]);
@@ -200,7 +200,7 @@ describe('Hydra Bootstrap', () => {
     }
     
     // Page entry using both domains
-    class AppPage implements PageEntry {
+    class AppPage implements PageController {
       public data: any = null;
       
       constructor(
@@ -230,7 +230,7 @@ describe('Hydra Bootstrap', () => {
     
     const AppContext = {
       register(hydra: Hydra) {
-        hydra.registerPageEntry(AppPage, [
+        hydra.registerPageController(AppPage, [
           service(AuthService),
           service(DataService)
         ]);
@@ -288,7 +288,7 @@ describe('Hydra Bootstrap', () => {
     }
     
     // Page entry
-    class MainPage implements PageEntry {
+    class MainPage implements PageController {
       constructor(
         private logger: LoggerService,
         private api: ApiService
@@ -315,7 +315,7 @@ describe('Hydra Bootstrap', () => {
         ]);
         
         // Page entries
-        hydra.registerPageEntry(MainPage, [
+        hydra.registerPageController(MainPage, [
           service(LoggerService),
           service(ApiService)
         ]);

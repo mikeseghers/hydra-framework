@@ -1,8 +1,8 @@
 import type { PageEntry } from '@mikeseghers/hydra';
 import { NoteService } from '../services/NoteService';
-import { NotificationPart } from '../pageparts/NotificationPart';
-import { StatusPart } from '../pageparts/StatusPart';
-import { AppStatePart } from '../pageparts/AppStatePart';
+import { NotificationMediator } from '../mediators/NotificationMediator';
+import { StatusMediator } from '../mediators/StatusMediator';
+import { AppStateMediator } from '../mediators/AppStateMediator';
 import { NoteListComponent, createNoteListComponent } from '../components/NoteListComponent';
 import { NoteEditorComponent, createNoteEditorComponent } from '../components/NoteEditorComponent';
 
@@ -12,7 +12,7 @@ import { NoteEditorComponent, createNoteEditorComponent } from '../components/No
  * This PageEntry demonstrates:
  * - Coordinating multiple components
  * - Handling user actions (new, save, delete)
- * - Wiring up event listeners between PageParts and components
+ * - Wiring up event listeners between Mediators and components
  * - Managing application flow
  *
  * The page receives its dependencies through constructor injection:
@@ -27,9 +27,9 @@ export class NotesPage implements PageEntry {
 
   constructor(
     private noteService: NoteService,
-    private notifications: NotificationPart,
-    private status: StatusPart,
-    private appState: AppStatePart
+    private notifications: NotificationMediator,
+    private status: StatusMediator,
+    private appState: AppStateMediator
   ) {}
 
   async load(): Promise<void> {
