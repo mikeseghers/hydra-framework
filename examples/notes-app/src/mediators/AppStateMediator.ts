@@ -16,12 +16,6 @@ export interface AppStateEvents {
 }
 
 /**
- * Elements interface for AppStateMediator (empty - no DOM elements needed).
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface Elements {}
-
-/**
  * AppStateMediator - Central state management for the notes application.
  *
  * This PageMediator demonstrates:
@@ -37,7 +31,7 @@ export class AppStateMediator extends AbstractMediator<AppStateEvents> {
   #selectedNote: Note | null = null;
   #notes: Note[] = [];
 
-  constructor(_pageElements: Elements) {
+  constructor() {
     super();
   }
 
