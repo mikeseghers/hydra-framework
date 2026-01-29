@@ -5,6 +5,9 @@
   "license": "MIT",
   "author": "Mike Seghers",
   "type": "module",
+  "workspaces": [
+    "examples/*"
+  ],
   "main": "./dist/hydra.umd.js",
   "module": "./dist/hydra.es.js",
   "types": "./dist/index.d.ts",
@@ -16,7 +19,8 @@
     }
   },
   "files": [
-    "dist", "README.md"
+    "dist",
+    "README.md"
   ],
   "keywords": [
     "dependency-injection",
@@ -36,14 +40,22 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build && tsc --emitDeclarationOnly",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "prepublishOnly": "npm run test:run && npm run build"
   },
   "peerDependencies": {
     "rxjs": "^7.0.0"
   },
   "devDependencies": {
     "@types/node": "^25.0.10",
+    "@vitest/ui": "^4.0.18",
+    "jsdom": "^27.4.0",
+    "rxjs": "^7.0.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
   }
 }

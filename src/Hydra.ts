@@ -14,13 +14,13 @@ declare global {
 export type PageEntryConstructor = new (...args: any[]) => PageEntry;
 export type PageEntryDefinitionParameter =
   | ServiceDependencyDefinition
-  | PagePartDependencyDefinition<any, any>
+  | PagePartDependencyDefinition
   | PageElementContainer
   | ValueDependencyDefinition;
 export type PagePartConstructor<EventType, T extends PagePart<EventType> = PagePart<EventType>> = new (...args: any[]) => T;
 export type PagePartDefinitionParameter =
   | ServiceDependencyDefinition
-  | PagePartDependencyDefinition<any, any>
+  | PagePartDependencyDefinition
   | PageElementContainer
   | ValueDependencyDefinition;
 export type ServiceConstructor = new (...args: any[]) => any;
@@ -236,15 +236,15 @@ export default class Hydra implements HydraRegistry, HydraRepository {
     return comp;
   }
 
-  getPagePartInstance<EventType = any, T extends PagePart<EventType> = any>(definition: PagePartDependencyDefinition<EventType, T>): T {
+  getPagePartInstance(definition: PagePartDependencyDefinition): Loadable {
     const ppd = this.pagePartDefinitions[definition.pagePartType.name];
     if (!ppd) {
       throw new Error(
         'Could not find definition for ' + definition.pagePartType.name + ' make sure you decorate it with the PagePart decorator'
       );
     }
-    const [_, pagePartDecoratorOptions] = ppd;
-    return this.constructPagePart<EventType, T>(definition.pagePartType, pagePartDecoratorOptions, definition.options);
+    const [pagePartConstructor, pagePartDecoratorOptions] = ppd;
+    return this.constructPagePart(pagePartConstructor, pagePartDecoratorOptions, definition.options);
   }
 
   static getInstance(): Hydra {
@@ -272,19 +272,19 @@ export function service(serviceType: new (...args: any[]) => any): ServiceDepend
   return { serviceType };
 }
 
-export interface PagePartDependencyDefinition<EventType, T extends PagePart<EventType>> {
-  pagePartType: PagePartConstructor<EventType, T>;
+export interface PagePartDependencyDefinition {
+  pagePartType: new (...args: unknown[]) => Loadable;
   options?: PagePartOptions;
 }
 
-export function isPagePartDependencyDefinition(definition: any): definition is PagePartDependencyDefinition<any, any> {
-  return definition.pagePartType !== undefined;
+export function isPagePartDependencyDefinition(definition: unknown): definition is PagePartDependencyDefinition {
+  return typeof definition === 'object' && definition !== null && 'pagePartType' in definition;
 }
 
 export function pagePart<EventType, T extends PagePart<EventType>>(
   pagePartType: PagePartConstructor<EventType, T>,
   options?: PagePartOptions
-): PagePartDependencyDefinition<EventType, T> {
+): PagePartDependencyDefinition {
   return { pagePartType, options };
 }
 

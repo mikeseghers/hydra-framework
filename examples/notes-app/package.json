@@ -1,0 +1,16 @@
+{
+  "name": "hydra-notes-app-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example notes application demonstrating Hydra framework features",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@mikeseghers/hydra": "file:../.."
+  },
+  "//dependencies": "NOTE: In a real project, use '@mikeseghers/hydra': '^1.0.0' from npm instead of the file reference"
+}
