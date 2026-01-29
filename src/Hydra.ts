@@ -1,5 +1,6 @@
 import { BaseComponent } from './BaseComponent';
 import { Component } from './Component';
+import { discoverPageParts, findPagePart } from './DataAttributes';
 import Loadable from './Loadable';
 import PageEntry from './PageEntry';
 import PagePart from './PagePart';
@@ -22,7 +23,8 @@ export type PagePartDefinitionParameter =
   | ServiceDependencyDefinition
   | PagePartDependencyDefinition
   | PageElementContainer
-  | ValueDependencyDefinition;
+  | ValueDependencyDefinition
+  | DataAttributesMarker;
 export type ServiceConstructor = new (...args: any[]) => any;
 export type ServiceDefinitionParameter = ServiceDependencyDefinition | ValueDependencyDefinition;
 export interface PagePartOptions {
@@ -177,7 +179,7 @@ export default class Hydra implements HydraRegistry, HydraRepository {
       return alreadyConstructed as T;
     }
 
-    const dependencies = this.resolveDependencies(parameters, options);
+    const dependencies = this.resolveDependencies(parameters, options, pagePartConstructor.name);
     const constructed = new pagePartConstructor(...dependencies, options);
     this.pageParts[pagePartName] = constructed;
     return constructed;
@@ -194,7 +196,11 @@ export default class Hydra implements HydraRegistry, HydraRepository {
     return this.pageEntries[pageEntryConstructor.name];
   }
 
-  private resolveDependencies(parameters: PagePartDefinitionParameter[] | PageEntryDefinitionParameter[], options?: PagePartOptions) {
+  private resolveDependencies(
+    parameters: PagePartDefinitionParameter[] | PageEntryDefinitionParameter[],
+    options?: PagePartOptions,
+    pagePartName?: string
+  ) {
     const dependencies = [];
     const elementDependencies: any = {};
     for (const param of parameters) {
@@ -202,6 +208,10 @@ export default class Hydra implements HydraRegistry, HydraRepository {
         dependencies.push(this.getServiceInstance(param.serviceType));
       } else if (isPagePartDependencyDefinition(param)) {
         dependencies.push(this.getPagePartInstance(param));
+      } else if (isDataAttributesMarker(param)) {
+        // Auto-discover elements from DOM using data attributes
+        const elements = this.discoverElementsFromDataAttributes(pagePartName, options?.qualifier);
+        dependencies.push(elements);
       } else if (isPageElementContainer(param)) {
         const result = pageElements(param, document, options);
         dependencies.push(result);
@@ -213,6 +223,27 @@ export default class Hydra implements HydraRegistry, HydraRepository {
       dependencies.unshift(elementDependencies);
     }
     return dependencies;
+  }
+
+  private discoverElementsFromDataAttributes(
+    pagePartName?: string,
+    qualifier?: string
+  ): Record<string, HTMLElement | HTMLElement[]> {
+    if (!pagePartName) {
+      throw new Error('Cannot discover elements via data attributes without a PagePart name');
+    }
+
+    const discovered = discoverPageParts(document);
+    const pagePart = findPagePart(discovered, pagePartName, qualifier);
+
+    if (!pagePart) {
+      throw new Error(
+        `Could not find PagePart "${pagePartName}"${qualifier ? ` with qualifier "${qualifier}"` : ''} in the DOM. ` +
+          `Make sure to add data-hydra-pagepart="${pagePartName}" to an element.`
+      );
+    }
+
+    return pagePart.elements;
   }
 
   getServiceInstance<ServiceType>(serviceType: ConstructorOf<ServiceType>, name?: string): ServiceType {
@@ -361,6 +392,37 @@ export function isValueDependencyDefinition(definition: any): definition is Valu
 
 export function value(v: any): ValueDependencyDefinition {
   return { value: v };
+}
+
+/**
+ * Marker for data-attribute based element discovery.
+ * When used in PagePart registration, Hydra will auto-discover elements
+ * from the DOM using data-hydra-element attributes.
+ */
+export interface DataAttributesMarker {
+  __dataAttributes: true;
+}
+
+export function isDataAttributesMarker(value: unknown): value is DataAttributesMarker {
+  return typeof value === 'object' && value !== null && '__dataAttributes' in value;
+}
+
+/**
+ * Marker that tells Hydra to discover elements via data attributes.
+ *
+ * @example
+ * ```typescript
+ * // In context registration:
+ * hydra.registerPagePart(NotificationPart, [dataAttributes()]);
+ *
+ * // In HTML:
+ * <div data-hydra-pagepart="NotificationPart">
+ *   <div data-hydra-element="container"></div>
+ * </div>
+ * ```
+ */
+export function dataAttributes(): DataAttributesMarker {
+  return { __dataAttributes: true };
 }
 
 export function pageElements<PEC extends PageElementContainer>(

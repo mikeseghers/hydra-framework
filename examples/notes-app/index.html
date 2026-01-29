@@ -254,11 +254,56 @@
       min-height: 400px;
       color: #95a5a6;
     }
+
+    /* Status indicator - uses DATA ATTRIBUTES approach */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #7f8c8d;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #95a5a6;
+    }
+
+    .status-indicator.status-ready {
+      background: #27ae60;
+    }
+
+    .status-indicator.status-saving {
+      background: #f39c12;
+      animation: pulse 1s infinite;
+    }
+
+    .status-indicator.status-error {
+      background: #e74c3c;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
   </style>
 </head>
 <body>
-  <!-- Notification container -->
+  <!-- Notification container (TRADITIONAL approach - uses id selector) -->
   <div class="notifications" id="notifications"></div>
+
+  <!--
+    Status bar (DATA ATTRIBUTES approach)
+    - data-hydra-pagepart="StatusPart" marks this as the PagePart root
+    - data-hydra-element="..." marks child elements by property name
+    - Hydra discovers these automatically when using dataAttributes()
+  -->
+  <div class="status-bar" data-hydra-pagepart="StatusPart">
+    <span class="status-indicator" data-hydra-element="indicator"></span>
+    <span data-hydra-element="statusText">Initializing...</span>
+  </div>
 
   <!-- Main application -->
   <div class="app" id="app">

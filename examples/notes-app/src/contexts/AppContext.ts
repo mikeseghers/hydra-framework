@@ -1,48 +1,59 @@
-import { Hydra, HydraContext, service, pagePart, htmlElementDescriptor } from '@mikeseghers/hydra';
+import { Hydra, HydraContext, service, pagePart, htmlElementDescriptor, dataAttributes } from '@mikeseghers/hydra';
 import { NoteService } from '../services/NoteService';
 import { NotificationPart } from '../pageparts/NotificationPart';
 import { AppStatePart } from '../pageparts/AppStatePart';
+import { StatusPart } from '../pageparts/StatusPart';
 import { NotesPage } from '../pages/NotesPage';
-
-/**
- * Element descriptors for NotificationPart.
- * Hydra resolves these to actual elements and passes them to the constructor.
- */
-const notificationPartElements = {
-  container: htmlElementDescriptor('#notifications', HTMLDivElement)
-};
-
-/**
- * Element descriptors for AppStatePart (empty - no DOM elements needed).
- */
-const appStatePartElements = {};
 
 /**
  * AppContext - Application-wide Hydra context.
  *
- * This context demonstrates the recommended pattern for organizing
- * Hydra registrations. All services, page parts, and page entries
- * are registered here, with their dependencies declared.
+ * This context demonstrates BOTH approaches for element binding:
  *
- * The context is registered during application bootstrap, and Hydra
- * handles instantiation and dependency injection automatically.
+ * 1. TRADITIONAL APPROACH (htmlElementDescriptor):
+ *    - Define element descriptors with CSS selectors
+ *    - More explicit, works with any DOM structure
+ *    - Example: NotificationPart below
+ *
+ * 2. DATA ATTRIBUTES APPROACH (dataAttributes):
+ *    - Elements discovered via data-hydra-element attributes in DOM
+ *    - Self-documenting HTML, less boilerplate in context
+ *    - Example: StatusPart below
  */
+
+// ============================================================
+// TRADITIONAL APPROACH: Element descriptors with CSS selectors
+// ============================================================
+const notificationPartElements = {
+  container: htmlElementDescriptor('#notifications', HTMLDivElement)
+};
+
 export const AppContext: HydraContext = {
   register(hydra: Hydra): void {
     // Register services
-    // Services are singletons that provide shared functionality
     hydra.registerService(NoteService);
 
-    // Register page parts
-    // PageParts are event-capable components for cross-cutting concerns
+    // --------------------------------------------------------
+    // TRADITIONAL: Using htmlElementDescriptor with CSS selectors
+    // The context defines WHERE to find elements (#notifications)
+    // --------------------------------------------------------
     hydra.registerPagePart(NotificationPart, [notificationPartElements]);
-    hydra.registerPagePart(AppStatePart, [appStatePartElements]);
+
+    // --------------------------------------------------------
+    // DATA ATTRIBUTES: Using dataAttributes() marker
+    // Elements are discovered from DOM via data-hydra-element
+    // HTML must have: data-hydra-pagepart="StatusPart"
+    // --------------------------------------------------------
+    hydra.registerPagePart(StatusPart, [dataAttributes()]);
+
+    // AppStatePart has no DOM elements
+    hydra.registerPagePart(AppStatePart, [{}]);
 
     // Register page entries
-    // PageEntries are top-level page controllers
     hydra.registerPageEntry(NotesPage, [
       service(NoteService),
       pagePart(NotificationPart),
+      pagePart(StatusPart),
       pagePart(AppStatePart)
     ]);
   }

@@ -1,6 +1,7 @@
 import type { PageEntry } from '@mikeseghers/hydra';
 import { NoteService } from '../services/NoteService';
 import { NotificationPart } from '../pageparts/NotificationPart';
+import { StatusPart } from '../pageparts/StatusPart';
 import { AppStatePart } from '../pageparts/AppStatePart';
 import { NoteListComponent, createNoteListComponent } from '../components/NoteListComponent';
 import { NoteEditorComponent, createNoteEditorComponent } from '../components/NoteEditorComponent';
@@ -16,7 +17,8 @@ import { NoteEditorComponent, createNoteEditorComponent } from '../components/No
  *
  * The page receives its dependencies through constructor injection:
  * - NoteService: for CRUD operations
- * - NotificationPart: for showing user feedback
+ * - NotificationPart: for showing user feedback (TRADITIONAL approach)
+ * - StatusPart: for showing app status (DATA ATTRIBUTES approach)
  * - AppStatePart: for managing selection state
  */
 export class NotesPage implements PageEntry {
@@ -26,6 +28,7 @@ export class NotesPage implements PageEntry {
   constructor(
     private noteService: NoteService,
     private notifications: NotificationPart,
+    private status: StatusPart,
     private appState: AppStatePart
   ) {}
 
@@ -109,13 +112,17 @@ export class NotesPage implements PageEntry {
   }
 
   private handleSave(noteId: string, title: string, content: string): void {
+    this.status.setStatus('saving', 'Saving...');
+
     const updated = this.noteService.updateNote(noteId, { title, content });
 
     if (updated) {
       this.appState.notifyNoteUpdated(updated);
       this.notifications.success('Note saved');
+      this.status.setStatus('ready', 'Saved');
     } else {
       this.notifications.error('Failed to save note');
+      this.status.setStatus('error', 'Save failed');
     }
   }
 

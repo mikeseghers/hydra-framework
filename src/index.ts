@@ -20,7 +20,8 @@ export {
   htmlElementDescriptor,
   htmlElementCollectionDescriptor,
   pageElements,
-  constructComponent
+  constructComponent,
+  dataAttributes
 } from './Hydra';
 
 export type { BaseComponent } from './BaseComponent';
@@ -32,3 +33,11 @@ export { AbstractPagePart } from './AbstractPagePart';
 export type { default as PageEntry } from './PageEntry';
 export type { default as Loadable } from './Loadable';
 export * from './View';
+export {
+  HYDRA_DATA_ATTRIBUTES,
+  discoverPageParts,
+  findPagePart,
+  assertElementType,
+  assertElementTypes
+} from './DataAttributes';
+export type { DiscoveredPagePart } from './DataAttributes';
