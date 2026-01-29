@@ -6,7 +6,7 @@ const STORAGE_KEY = 'hydra-notes-app';
  * NoteService - Manages note persistence and CRUD operations.
  *
  * This service demonstrates how to create a stateful service
- * that can be injected into Mediators and PageEntries.
+ * that can be injected into Mediators and PageControllers.
  *
  * Notes are persisted to localStorage for simplicity.
  */

@@ -8,7 +8,7 @@ import { AppContext } from './contexts/AppContext';
  *
  * 1. Services (NoteService)
  *    - Singleton services for business logic and data management
- *    - Injected into Mediators and PageEntries
+ *    - Injected into Mediators and PageControllers
  *
  * 2. Mediators (NotificationMediator, AppStateMediator)
  *    - Event-capable components for cross-cutting concerns
@@ -32,7 +32,7 @@ import { AppContext } from './contexts/AppContext';
  * 3. On page load, Hydra:
  *    a. Instantiates all services
  *    b. Instantiates all Mediators
- *    c. Instantiates all PageEntries (with injected dependencies)
+ *    c. Instantiates all PageControllers (with injected dependencies)
  *    d. Calls load() on each in order
  */
 

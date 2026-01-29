@@ -126,7 +126,7 @@ Hydra.getInstance(); // Hooks into window.onload and boots automatically
 That's it! When the page loads, Hydra will:
 1. Instantiate all services
 2. Resolve DOM elements
-3. Construct PageEntries with their dependencies
+3. Construct PageControllers with their dependencies
 4. Call `load()` on everything
 
 ---
@@ -211,9 +211,9 @@ notifications.fromMediatorEvent('shown').subscribe((payload) => {
 });
 ```
 
-### PageEntries
+### PageControllers
 
-PageEntries are top-level page controllers. They receive dependencies and coordinate the page.
+PageControllers are top-level page controllers. They receive dependencies and coordinate the page.
 
 ```typescript
 class DashboardPage implements PageController {

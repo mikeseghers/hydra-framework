@@ -337,9 +337,9 @@ describe('Mediators', () => {
    * Example 7: Mediator with Dependency Injection
    *
    * Mediators can be registered with Hydra and injected into
-   * PageEntries or other Mediators using the mediator() dependency.
+   * PageControllers or other Mediators using the mediator() dependency.
    */
-  it('should inject Mediators into PageEntries', async () => {
+  it('should inject Mediators into PageControllers', async () => {
     interface MessageEvents {
       newMessage: { from: string; text: string };
     }
