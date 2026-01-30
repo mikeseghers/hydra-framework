@@ -2,7 +2,7 @@
 
 Lightweight TypeScript dependency injection and component management framework for web applications. Provides structured, maintainable client-side development without heavy framework overhead.
 
-**Package:** `@mikeseghers/hydra` | **Dependencies:** RxJS ^7.0.0 | **Build:** Vite + TypeScript | **Tests:** Vitest
+**NPM:** [@mikeseghers/hydra](https://www.npmjs.com/package/@mikeseghers/hydra) | **Dependencies:** RxJS ^7.0.0 | **Build:** Vite + TypeScript | **Tests:** Vitest
 
 ## Project Structure
 
